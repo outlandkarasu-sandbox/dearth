@@ -1,0 +1,8 @@
+{
+	"authors": [
+		"outnald.karasu@gmail.com"
+	],
+	"description": "A D earth simulation.",
+	"license": "BSL-1.0",
+	"name": "dearth"
+}
