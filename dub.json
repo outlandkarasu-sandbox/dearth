@@ -13,5 +13,9 @@
 		"-preview=dip1008"
 	],
 	"license": "BSL-1.0",
-	"name": "dearth"
+	"name": "dearth",
+	"versions": [
+		"GL_41"
+	]
 }
+
