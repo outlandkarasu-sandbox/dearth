@@ -11,6 +11,8 @@ import bindbc.sdl :
     SDL_Window,
     SDL_WINDOW_OPENGL;
 
+import dearth.sdl.exception : enforceSDL;
+
 /**
 During show window.
 
@@ -31,13 +33,13 @@ void duringWindow(
     scope void delegate(scope SDL_Window*) dg)
 in (dg)
 {
-    scope window = SDL_CreateWindow(
+    scope window = enforceSDL(SDL_CreateWindow(
         toStringz(title),
         x,
         y,
         w,
         h,
-        SDL_WINDOW_OPENGL);
+        SDL_WINDOW_OPENGL));
     scope(exit) SDL_DestroyWindow(window);
 
     dg(window);
