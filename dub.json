@@ -2,9 +2,20 @@
 	"authors": [
 		"outnald.karasu@gmail.com"
 	],
+	"dependencies": {
+		"bindbc-opengl": "~>0.12.0",
+		"bindbc-sdl": "~>0.16.0"
+	},
 	"description": "A D earth simulation.",
+	"dflags": [
+		"-preview=dip25",
+		"-preview=dip1000",
+		"-preview=dip1008"
+	],
 	"license": "BSL-1.0",
 	"name": "dearth",
-	"dflags": ["-preview=dip25", "-preview=dip1000", "-preview=dip1008"]
+	"versions": [
+		"GL_41"
+	]
 }
 
