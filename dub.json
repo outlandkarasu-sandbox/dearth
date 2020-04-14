@@ -4,5 +4,7 @@
 	],
 	"description": "A D earth simulation.",
 	"license": "BSL-1.0",
-	"name": "dearth"
+	"name": "dearth",
+	"dflags": ["-preview=dip25", "-preview=dip1000", "-preview=dip1008"]
 }
+
