@@ -14,7 +14,7 @@ import bindbc.sdl :
     SDLSupport,
     unloadSDL;
 
-import dearth.sdl.exception : SDLException;
+import dearth.sdl.exception : enforceSDL, SDLException;
 
 /**
 During SDL2 library.
@@ -36,7 +36,7 @@ void duringSDL(scope void delegate(SDLSupport) dg)
     scope(exit) unloadSDL();
 
     // initialize SDL subsystem.
-    SDL_Init(SDL_INIT_VIDEO);
+    enforceSDL(SDL_Init(SDL_INIT_VIDEO));
     scope(exit) SDL_Quit();
 
     dg(support);
