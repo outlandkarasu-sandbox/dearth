@@ -1,6 +1,8 @@
-import std.stdio;
+import std.stdio : writefln;
+
+import dearth.sdl : initializeSDL;
 
 void main()
 {
-	writeln("Edit source/app.d to start your project.");
+    writefln("%s", initializeSDL());
 }
