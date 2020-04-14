@@ -5,19 +5,26 @@ module dearth.sdl.initialize;
 
 import std.exception : enforce;
 
-import bindbc.sdl : loadSDL, sdlSupport, SDLSupport;
+import bindbc.sdl :
+    loadSDL,
+    SDL_Init,
+    SDL_INIT_VIDEO,
+    SDL_Quit,
+    sdlSupport,
+    SDLSupport,
+    unloadSDL;
 
-import dearth.sdl.exception : SDLException;
+import dearth.sdl.exception : enforceSDL, SDLException;
 
 /**
-Initialize SDL2 library.
+During SDL2 library.
 
-Returns:
-    SDL2 support version.
+Params:
+    dg = application delegate.
+Throws:
+    SDLException if failed.
 */
-SDLSupport initializeSDL()
-out (r; r != SDLSupport.noLibrary)
-out (r; r != SDLSupport.badLibrary)
+void duringSDL(scope void delegate(SDLSupport) dg)
 {
     immutable support = loadSDL();
     if (support != sdlSupport)
@@ -25,6 +32,13 @@ out (r; r != SDLSupport.badLibrary)
         enforce!SDLException(support != SDLSupport.noLibrary, "No library");
         enforce!SDLException(support != SDLSupport.badLibrary, "Bad library");
     }
-    return support;
+
+    scope(exit) unloadSDL();
+
+    // initialize SDL subsystem.
+    enforceSDL(SDL_Init(SDL_INIT_VIDEO));
+    scope(exit) SDL_Quit();
+
+    dg(support);
 }
 
