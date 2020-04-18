@@ -8,6 +8,8 @@ import std.string : toStringz;
 import bindbc.sdl :
     SDL_CreateWindow,
     SDL_DestroyWindow,
+    SDL_GL_CreateContext,
+    SDL_GL_DeleteContext,
     SDL_Window,
     SDL_WINDOW_OPENGL;
 
@@ -41,6 +43,9 @@ in (dg)
         h,
         SDL_WINDOW_OPENGL));
     scope(exit) SDL_DestroyWindow(window);
+
+    auto context = SDL_GL_CreateContext(window);
+    scope(exit) SDL_GL_DeleteContext(context);
 
     dg(window);
 }
