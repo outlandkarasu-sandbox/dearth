@@ -15,7 +15,8 @@
 	"license": "BSL-1.0",
 	"name": "dearth",
 	"versions": [
-		"GL_41"
+		"GL_41",
+		"GL_ARB_ES2_compatibility"
 	]
 }
 

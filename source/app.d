@@ -2,16 +2,23 @@ import std.stdio : writefln;
 
 import bindbc.sdl : SDL_QuitEvent;
 
-import dearth.sdl : duringSDL, duringWindow, mainLoopBuilder;
+import dearth :
+    duringOpenGL,
+    duringSDL,
+    duringWindow,
+    mainLoopBuilder;
 
 void main()
 {
-    duringSDL((support)
+    duringSDL((sdlSupport)
     {
-        writefln("%s", support);
         duringWindow("", 0, 0, 640, 480, (w)
         {
-            mainLoopBuilder.run();
+            duringOpenGL((glSupport)
+            {
+                writefln("%s,%s", sdlSupport, glSupport);
+                mainLoopBuilder.run();
+            });
         });
     });
 }
