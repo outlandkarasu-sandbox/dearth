@@ -12,6 +12,9 @@
 		"-preview=dip1000",
 		"-preview=dip1008"
 	],
+	"stringImportPaths": [
+		"shaders/"
+	],
 	"license": "BSL-1.0",
 	"name": "dearth",
 	"versions": [
