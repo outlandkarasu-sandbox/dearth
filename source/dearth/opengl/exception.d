@@ -42,7 +42,7 @@ void enforceGL(alias F, string file = __FILE__, size_t line = __LINE__)() if (is
     immutable error = glGetError();
     if (error != GL_NO_ERROR)
     {
-        throw new OpenGLException(error.glErrotToString, file, line);
+        throw new OpenGLException(glErrorToString(error), file, line);
     }
 }
 
