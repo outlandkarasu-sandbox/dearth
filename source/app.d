@@ -3,6 +3,7 @@ import std.stdio : writefln;
 import bindbc.sdl : SDL_QuitEvent;
 
 import dearth :
+    createVertexShader,
     duringOpenGL,
     duringSDL,
     duringWindow,
@@ -17,6 +18,7 @@ void main()
             duringOpenGL((glSupport)
             {
                 writefln("%s,%s", sdlSupport, glSupport);
+                auto vertexShader = createVertexShader(import("earth.vert"));
                 scope mainLoop = new MainLoop();
                 mainLoop.run(window);
             });
