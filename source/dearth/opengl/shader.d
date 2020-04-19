@@ -13,16 +13,26 @@ import bindbc.opengl :
     GL_FALSE,
     GL_FRAGMENT_SHADER,
     GL_INFO_LOG_LENGTH,
-    GL_VERTEX_SHADER,
+    GL_LINK_STATUS,
+    GL_VERTEX_SHADER;
+import bindbc.opengl :
     GLchar,
     GLenum,
     GLint,
-    GLuint,
+    GLuint;
+import bindbc.opengl :
+    glAttachShader,
     glCompileShader,
+    glCreateProgram,
     glCreateShader,
+    glDeleteProgram,
     glDeleteShader,
+    glDetachShader,
+    glGetProgramInfoLog,
+    glGetProgramiv,
     glGetShaderInfoLog,
     glGetShaderiv,
+    glLinkProgram,
     glShaderSource;
 
 import dearth.opengl.exception :
@@ -44,7 +54,7 @@ struct Shader(GLenum shaderType)
 
 private:
 
-    this(string file = __FILE__, size_t line = __LINE__)(scope const(char)[] source) scope
+    this(string file, size_t line, scope const(char)[] source) scope
     in (source.length < GLint.max)
     {
         // create shader.
@@ -97,11 +107,13 @@ Params:
     line = source line number.
     source = shader source.
 Returns:
-    vertex shader
+    compiled vertex shader.
+Throws:
+    OpenGLException if failed.
 */
 VertexShader createVertexShader(string file = __FILE__, size_t line = __LINE__)(scope const(char)[] source)
 {
-    return VertexShader(source);
+    return VertexShader(file, line, source);
 }
 
 /**
@@ -112,10 +124,86 @@ Params:
     line = source line number.
     source = shader source.
 Returns:
-    fragment shader
+    compiled fragment shader
+Throws:
+    OpenGLException if failed.
 */
 FragmentShader createFragmentShader(string file = __FILE__, size_t line = __LINE__)(scope const(char)[] source)
 {
-    return FragmentShader(source);
+    return FragmentShader(file, line, source);
+}
+
+struct ShaderProgram
+{
+    @disable this();
+
+private:
+
+    this(
+        string file,
+        size_t line,
+        scope ref const(VertexShader) vertexShader,
+        scope ref const(FragmentShader) fragmentShader) scope
+    {
+        // create program.
+        immutable id = glCreateProgram();
+        checkGLError();
+        scope(failure) glDeleteProgram(id);
+
+        // attach shaders.
+        immutable vertexShaderId = vertexShader.payload_.id;
+        enforceGL!(() => glAttachShader(id, vertexShaderId));
+        scope(exit) glDetachShader(id, vertexShaderId);
+
+        immutable fragmentShaderId = fragmentShader.payload_.id;
+        enforceGL!(() => glAttachShader(id, fragmentShaderId));
+        scope(exit) glDetachShader(id, fragmentShaderId);
+
+        // link program
+        enforceGL!(() => glLinkProgram(id));
+
+        // get error log if failed.
+        GLint status;
+        glGetProgramiv(id, GL_LINK_STATUS, &status);
+        if(status == GL_FALSE) {
+            GLint logLength;
+            glGetProgramiv(id, GL_INFO_LOG_LENGTH, &logLength);
+            auto log = new GLchar[logLength];
+            glGetProgramInfoLog(id, logLength, null, log.ptr);
+            throw new OpenGLException(assumeUnique(log), file, line);
+        }
+
+        this.payload_ = Payload(id);
+    }
+
+    struct Payload
+    {
+        GLuint id;
+
+        ~this() @nogc nothrow scope
+        {
+            glDeleteProgram(id);
+        }
+    }
+
+    RefCounted!(Payload, RefCountedAutoInitialize.no) payload_;
+}
+
+/**
+Create shader program.
+
+Params:
+    vertexShader = vertex shader.
+    fragmentShader = fragment shader.
+Returns:
+    linked shader program.
+Throws:
+    OpenGLException if failed.
+*/
+ShaderProgram createProgram(string file = __FILE__, size_t line = __LINE__)(
+    scope ref const(VertexShader) vertexShader,
+    scope ref const(FragmentShader) fragmentShader)
+{
+    return ShaderProgram(file, line, vertexShader, fragmentShader);
 }
 

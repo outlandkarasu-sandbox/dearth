@@ -4,6 +4,7 @@ import bindbc.sdl : SDL_QuitEvent;
 
 import dearth :
     createFragmentShader,
+    createProgram,
     createVertexShader,
     duringOpenGL,
     duringSDL,
@@ -21,6 +22,7 @@ void main()
                 writefln("%s,%s", sdlSupport, glSupport);
                 auto vertexShader = createVertexShader(import("earth.vert"));
                 auto fragmentShader = createFragmentShader(import("earth.frag"));
+                auto shaderProgram = createProgram(vertexShader, fragmentShader);
                 scope mainLoop = new MainLoop();
                 mainLoop.run(window);
             });
