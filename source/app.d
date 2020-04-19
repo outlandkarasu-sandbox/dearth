@@ -9,7 +9,17 @@ import dearth :
     duringOpenGL,
     duringSDL,
     duringWindow,
-    MainLoop;
+    MainLoop,
+    createVAO,
+    VertexAttribute;
+
+struct Vertex
+{
+    float[3] position;
+
+    @(VertexAttribute.normalized)
+    ubyte[4] color;
+}
 
 void main()
 {
@@ -23,6 +33,7 @@ void main()
                 auto vertexShader = createVertexShader(import("earth.vert"));
                 auto fragmentShader = createFragmentShader(import("earth.frag"));
                 auto shaderProgram = createProgram(vertexShader, fragmentShader);
+                auto vao = createVAO!Vertex();
                 scope mainLoop = new MainLoop();
                 mainLoop.run(window);
             });
