@@ -39,6 +39,17 @@ Throws:
 void enforceGL(alias F, string file = __FILE__, size_t line = __LINE__)() if (isCallable!F)
 {
     F();
+    checkGLError!(file, line)();
+}
+
+/**
+Check OpenGL error.
+
+Throws:
+    OpenGLException if failed.
+*/
+void checkGLError(string file = __FILE__, size_t line = __LINE__)()
+{
     immutable error = glGetError();
     if (error != GL_NO_ERROR)
     {
