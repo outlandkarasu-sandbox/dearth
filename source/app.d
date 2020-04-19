@@ -6,18 +6,19 @@ import dearth :
     duringOpenGL,
     duringSDL,
     duringWindow,
-    mainLoopBuilder;
+    MainLoop;
 
 void main()
 {
     duringSDL((sdlSupport)
     {
-        duringWindow("", 0, 0, 640, 480, (w)
+        duringWindow("", 0, 0, 640, 480, (window)
         {
             duringOpenGL((glSupport)
             {
                 writefln("%s,%s", sdlSupport, glSupport);
-                mainLoopBuilder.run();
+                scope mainLoop = new MainLoop();
+                mainLoop.run(window);
             });
         });
     });
