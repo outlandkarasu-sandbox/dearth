@@ -9,17 +9,19 @@ import bindbc.opengl :
     glClearColor,
     glClear,
     glEnable,
+    glFlush,
     glViewport;
 
 import dearth :
     createFragmentShader,
     createProgram,
+    createVAO,
     createVertexShader,
     duringOpenGL,
     duringSDL,
     duringWindow,
     MainLoop,
-    createVAO,
+    ShaderProgram,
     VertexAttribute;
 
 struct Vertex
@@ -48,15 +50,20 @@ void main()
                 auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
                 auto vao = createVAO!Vertex();
                 scope mainLoop = new MainLoop();
-                mainLoop.onDraw(() => draw()).run(window);
+                mainLoop.onDraw(() => draw(shaderProgram)).run(window);
             });
         });
     });
 }
 
-void draw()
+void draw(scope ref ShaderProgram!Vertex program)
 {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    scope(exit) glFlush();
+
+    program.duringUse(()
+    {
+    });
 }
 

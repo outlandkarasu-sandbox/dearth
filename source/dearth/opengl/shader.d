@@ -4,6 +4,8 @@ Shader module.
 module dearth.opengl.shader;
 
 import std.exception : assumeUnique, enforce;
+import std.traits :
+    isCallable;
 import std.typecons :
     RefCounted,
     RefCountedAutoInitialize;
@@ -34,7 +36,8 @@ import bindbc.opengl :
     glGetShaderInfoLog,
     glGetShaderiv,
     glLinkProgram,
-    glShaderSource;
+    glShaderSource,
+    glUseProgram;
 
 import dearth.opengl.exception :
     checkGLError,
@@ -148,6 +151,22 @@ struct ShaderProgram(T)
     static assert (isVertexStruct!T);
 
     @disable this();
+
+    /**
+    During use program.
+
+    Params:
+        dg = delegate.
+    */
+    void duringUse(Dg)(scope Dg dg) scope
+    {
+        static assert (isCallable!Dg);
+
+        enforceGL!(() => glUseProgram(payload_.id));
+        scope(exit) glUseProgram(0);
+
+        dg();
+    }
 
 private:
 
