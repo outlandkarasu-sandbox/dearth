@@ -7,6 +7,7 @@ import std.traits :
     FieldNameTuple,
     Fields,
     hasUDA,
+    isCallable,
     isScalarType;
 import std.typecons :
     RefCounted,
@@ -91,6 +92,24 @@ struct VertexArrayObject(T)
     static assert(isVertexStruct!T);
 
     @disable this();
+
+    /**
+    During bind VAO.
+
+    Params:
+        Dg = delegate type.
+        dg = delegate.
+    */
+    void duringBind(Dg)(scope Dg dg) scope
+    in (dg)
+    {
+        static assert(isCallable!Dg);
+
+        enforceGL!(() => glBindVertexArray(payload_.vaoID));
+        scope(exit) glBindVertexArray(0);
+
+        dg();
+    }
 
     void loadVertices(scope const(T)[] vertices) scope
     {

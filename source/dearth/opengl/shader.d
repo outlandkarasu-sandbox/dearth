@@ -159,6 +159,7 @@ struct ShaderProgram(T)
         dg = delegate.
     */
     void duringUse(Dg)(scope Dg dg) scope
+    in (dg)
     {
         static assert (isCallable!Dg);
 

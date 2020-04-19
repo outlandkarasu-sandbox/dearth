@@ -22,7 +22,8 @@ import dearth :
     duringWindow,
     MainLoop,
     ShaderProgram,
-    VertexAttribute;
+    VertexAttribute,
+    VertexArrayObject;
 
 struct Vertex
 {
@@ -50,13 +51,15 @@ void main()
                 auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
                 auto vao = createVAO!Vertex();
                 scope mainLoop = new MainLoop();
-                mainLoop.onDraw(() => draw(shaderProgram)).run(window);
+                mainLoop.onDraw(() => draw(shaderProgram, vao)).run(window);
             });
         });
     });
 }
 
-void draw(scope ref ShaderProgram!Vertex program)
+void draw(
+    scope ref ShaderProgram!Vertex program,
+    scope ref VertexArrayObject!Vertex vao)
 {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -64,6 +67,9 @@ void draw(scope ref ShaderProgram!Vertex program)
 
     program.duringUse(()
     {
+        vao.duringBind(()
+        {
+        });
     });
 }
 
