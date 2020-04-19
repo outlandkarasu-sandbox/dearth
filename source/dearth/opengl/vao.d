@@ -14,6 +14,7 @@ import std.typecons :
     RefCountedAutoInitialize;
 
 import bindbc.opengl :
+    GLsizei,
     GLuint,
     GLushort,
     GLvoid;
@@ -25,6 +26,7 @@ import bindbc.opengl :
     GL_FALSE,
     GL_FLOAT,
     GL_SHORT,
+    GL_TRIANGLES,
     GL_TRUE,
     GL_UNSIGNED_BYTE,
     GL_UNSIGNED_SHORT;
@@ -34,6 +36,7 @@ import bindbc.opengl :
     glBufferData,
     glDeleteBuffers,
     glDeleteVertexArrays,
+    glDrawElements,
     glEnableVertexAttribArray,
     glGenBuffers,
     glGenVertexArrays,
@@ -123,6 +126,16 @@ struct VertexArrayObject(T)
         enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, payload_.indicesID));
         scope(exit) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         enforceGL!(() => glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * GLushort.sizeof, indices.ptr, GL_DYNAMIC_DRAW));
+
+        payload_.indicesLength = cast(GLsizei) indices.length;
+    }
+
+    /**
+    Draw elements.
+    */
+    void drawElements() scope
+    {
+        enforceGL!(() => glDrawElements(GL_TRIANGLES, payload_.indicesLength, GL_UNSIGNED_SHORT, cast(const(GLvoid)*) 0));
     }
 
 private:
@@ -160,6 +173,7 @@ private:
         GLuint verticesID;
         GLuint indicesID;
         GLuint vaoID;
+        GLsizei indicesLength;
 
         ~this() @nogc nothrow scope
         {
