@@ -171,6 +171,12 @@ private:
         enforceGL!(() => glAttachShader(id, fragmentShaderId));
         scope(exit) glDetachShader(id, fragmentShaderId);
 
+        // bind vertex attributes.
+        static foreach (i, name; getVertexAttributeNames!T)
+        {
+            enforceGL!(() => glBindAttribLocation(id, i, name.ptr));
+        }
+
         // link program
         enforceGL!(() => glLinkProgram(id));
 
@@ -183,12 +189,6 @@ private:
             auto log = new GLchar[logLength];
             glGetProgramInfoLog(id, logLength, null, log.ptr);
             throw new OpenGLException(assumeUnique(log), file, line);
-        }
-
-        // bind vertex attributes.
-        static foreach (i, name; getVertexAttributeNames!T)
-        {
-            enforceGL!(() => glBindAttribLocation(id, i, name.ptr));
         }
 
         this.payload_ = Payload(id);

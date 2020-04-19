@@ -118,10 +118,10 @@ private:
 
         enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, verticesID));
         scope(exit) glBindBuffer(GL_ARRAY_BUFFER, 0);
+
         static foreach (i, name; getVertexAttributeNames!T)
         {
             enforceGL!(() {
-                import std.stdio : writefln;
                 alias FieldType = Fields!(T)[i];
                 immutable size = getFieldSize!FieldType;
                 immutable type = getGLType!FieldType;
