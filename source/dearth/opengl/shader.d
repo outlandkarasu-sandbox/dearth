@@ -22,6 +22,7 @@ import bindbc.opengl :
     GLuint;
 import bindbc.opengl :
     glAttachShader,
+    glBindAttribLocation,
     glCompileShader,
     glCreateProgram,
     glCreateShader,
@@ -39,6 +40,9 @@ import dearth.opengl.exception :
     checkGLError,
     enforceGL,
     OpenGLException;
+import dearth.opengl.vao :
+    isVertexStruct,
+    getVertexAttributeNames;
 
 /**
 OpenGL shader.
@@ -133,8 +137,16 @@ FragmentShader createFragmentShader(string file = __FILE__, size_t line = __LINE
     return FragmentShader(file, line, source);
 }
 
-struct ShaderProgram
+/**
+Shader program.
+
+Params:
+    T = vertex struct type.
+*/
+struct ShaderProgram(T)
 {
+    static assert (isVertexStruct!T);
+
     @disable this();
 
 private:
@@ -173,6 +185,12 @@ private:
             throw new OpenGLException(assumeUnique(log), file, line);
         }
 
+        // bind vertex attributes.
+        static foreach (i, name; getVertexAttributeNames!T)
+        {
+            enforceGL!(() => glBindAttribLocation(id, i, name.ptr));
+        }
+
         this.payload_ = Payload(id);
     }
 
@@ -193,6 +211,9 @@ private:
 Create shader program.
 
 Params:
+    T = vertex struct type.
+    file = source file name.
+    line = source line number.
     vertexShader = vertex shader.
     fragmentShader = fragment shader.
 Returns:
@@ -200,10 +221,10 @@ Returns:
 Throws:
     OpenGLException if failed.
 */
-ShaderProgram createProgram(string file = __FILE__, size_t line = __LINE__)(
+ShaderProgram!T createProgram(T, string file = __FILE__, size_t line = __LINE__)(
     scope ref const(VertexShader) vertexShader,
     scope ref const(FragmentShader) fragmentShader)
 {
-    return ShaderProgram(file, line, vertexShader, fragmentShader);
+    return ShaderProgram!T(file, line, vertexShader, fragmentShader);
 }
 

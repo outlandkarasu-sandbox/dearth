@@ -68,6 +68,19 @@ enum isVertexStruct(T) = is(T == struct) && __traits(isPOD, T);
 }
 
 /**
+Get vertex attribute names.
+
+Params:
+    T = vertex struct type.
+*/
+template getVertexAttributeNames(T)
+{
+    static assert(isVertexStruct!T);
+
+    alias getVertexAttributeNames = FieldNameTuple!T;
+}
+
+/**
 Vertex array object.
 
 Params:
@@ -105,7 +118,7 @@ private:
 
         enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, verticesID));
         scope(exit) glBindBuffer(GL_ARRAY_BUFFER, 0);
-        static foreach (i, name; FieldNameTuple!T)
+        static foreach (i, name; getVertexAttributeNames!T)
         {
             enforceGL!(() {
                 import std.stdio : writefln;

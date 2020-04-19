@@ -32,7 +32,7 @@ void main()
                 writefln("%s,%s", sdlSupport, glSupport);
                 auto vertexShader = createVertexShader(import("earth.vert"));
                 auto fragmentShader = createFragmentShader(import("earth.frag"));
-                auto shaderProgram = createProgram(vertexShader, fragmentShader);
+                auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
                 auto vao = createVAO!Vertex();
                 scope mainLoop = new MainLoop();
                 mainLoop.run(window);
