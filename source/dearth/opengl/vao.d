@@ -33,11 +33,39 @@ import bindbc.opengl :
     glBufferData,
     glDeleteBuffers,
     glDeleteVertexArrays,
+    glEnableVertexAttribArray,
     glGenBuffers,
     glGenVertexArrays,
     glVertexAttribPointer;
 
 import dearth.opengl.exception : enforceGL;
+
+/**
+True if T can use vertex struct.
+
+Params:
+    T = target type.
+*/
+enum isVertexStruct(T) = is(T == struct) && __traits(isPOD, T);
+
+///
+@nogc nothrow pure @safe unittest
+{
+    struct Vertex
+    {
+        float[4] position;
+        ubyte[3] color;
+    }
+
+    struct NonVertex
+    {
+        float[4] position;
+        ~this() {}
+    }
+
+    static assert( isVertexStruct!Vertex);
+    static assert(!isVertexStruct!NonVertex);
+}
 
 /**
 Vertex array object.
@@ -47,7 +75,7 @@ Params:
 */
 struct VertexArrayObject(T)
 {
-    static assert(is(T == struct) && __traits(isPOD, T));
+    static assert(isVertexStruct!T);
 
     @disable this();
 
@@ -88,6 +116,8 @@ private:
                 auto offset = cast(const(GLvoid)*) mixin("T." ~ name ~ ".offsetof");
                 glVertexAttribPointer(i, size, type, normalized, T.sizeof, offset);
             });
+
+            enforceGL!(() => glEnableVertexAttribArray(i));
         }
 
         this.payload_ = Payload(verticesID, indicesID, vaoID);
