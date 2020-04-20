@@ -4,6 +4,7 @@ Shader module.
 module dearth.opengl.shader;
 
 import std.exception : assumeUnique, enforce;
+import std.string : toStringz;
 import std.traits :
     isCallable;
 import std.typecons :
@@ -24,13 +25,13 @@ import bindbc.opengl :
     GLuint;
 import bindbc.opengl :
     glAttachShader,
-    glBindAttribLocation,
     glCompileShader,
     glCreateProgram,
     glCreateShader,
     glDeleteProgram,
     glDeleteShader,
     glDetachShader,
+    glGetAttribLocation,
     glGetProgramInfoLog,
     glGetProgramiv,
     glGetShaderInfoLog,
@@ -142,14 +143,9 @@ FragmentShader createFragmentShader(string file = __FILE__, size_t line = __LINE
 
 /**
 Shader program.
-
-Params:
-    T = vertex struct type.
 */
-struct ShaderProgram(T)
+struct ShaderProgram
 {
-    static assert (isVertexStruct!T);
-
     @disable this();
 
     /**
@@ -158,7 +154,7 @@ struct ShaderProgram(T)
     Params:
         dg = delegate.
     */
-    void duringUse(Dg)(scope Dg dg) scope
+    void duringUse(Dg)(scope Dg dg) const scope
     in (dg)
     {
         static assert (isCallable!Dg);
@@ -167,6 +163,22 @@ struct ShaderProgram(T)
         scope(exit) glUseProgram(0);
 
         dg();
+    }
+
+    /**
+    Get vertex attribute location.
+
+    Params:
+        name = attribute name
+    Returns:
+        attribute location
+    */
+    GLuint getAttributeLocation(scope const(char)[] name) const scope
+    {
+        immutable result = glGetAttribLocation(payload_.id, toStringz(name));
+        checkGLError();
+        enforce!OpenGLException(result != -1, "Invalid attribute name");
+        return result;
     }
 
 private:
@@ -190,12 +202,6 @@ private:
         immutable fragmentShaderId = fragmentShader.payload_.id;
         enforceGL!(() => glAttachShader(id, fragmentShaderId));
         scope(exit) glDetachShader(id, fragmentShaderId);
-
-        // bind vertex attributes.
-        static foreach (i, name; getVertexAttributeNames!T)
-        {
-            enforceGL!(() => glBindAttribLocation(id, i, name.ptr));
-        }
 
         // link program
         enforceGL!(() => glLinkProgram(id));
@@ -231,7 +237,6 @@ private:
 Create shader program.
 
 Params:
-    T = vertex struct type.
     file = source file name.
     line = source line number.
     vertexShader = vertex shader.
@@ -241,10 +246,10 @@ Returns:
 Throws:
     OpenGLException if failed.
 */
-ShaderProgram!T createProgram(T, string file = __FILE__, size_t line = __LINE__)(
+ShaderProgram createProgram(string file = __FILE__, size_t line = __LINE__)(
     scope ref const(VertexShader) vertexShader,
     scope ref const(FragmentShader) fragmentShader)
 {
-    return ShaderProgram!T(file, line, vertexShader, fragmentShader);
+    return ShaderProgram(file, line, vertexShader, fragmentShader);
 }
 

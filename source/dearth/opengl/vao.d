@@ -36,6 +36,7 @@ import bindbc.opengl :
     glBufferData,
     glDeleteBuffers,
     glDeleteVertexArrays,
+    glDisableVertexAttribArray,
     glDrawElements,
     glEnableVertexAttribArray,
     glGenBuffers,
@@ -43,6 +44,7 @@ import bindbc.opengl :
     glVertexAttribPointer;
 
 import dearth.opengl.exception : enforceGL;
+import dearth.opengl.shader : ShaderProgram;
 
 /**
 True if T can use vertex struct.
@@ -103,7 +105,7 @@ struct VertexArrayObject(T)
         Dg = delegate type.
         dg = delegate.
     */
-    void duringBind(Dg)(scope Dg dg) scope
+    void duringBind(Dg)(scope Dg dg) const scope
     in (dg)
     {
         static assert(isCallable!Dg);
@@ -114,6 +116,12 @@ struct VertexArrayObject(T)
         dg();
     }
 
+    /**
+    Load vertices data.
+
+    Params:
+        vertices = vertices data.
+    */
     void loadVertices(scope const(T)[] vertices) scope
     {
         enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, payload_.verticesID));
@@ -121,6 +129,12 @@ struct VertexArrayObject(T)
         enforceGL!(() => glBufferData(GL_ARRAY_BUFFER, vertices.length * T.sizeof, vertices.ptr, GL_DYNAMIC_DRAW));
     }
 
+    /**
+    Load indices data.
+
+    Params:
+        indices = indices data.
+    */
     void loadIndices(scope const(ushort)[] indices) scope
     {
         enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, payload_.indicesID));
@@ -128,6 +142,42 @@ struct VertexArrayObject(T)
         enforceGL!(() => glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.length * GLushort.sizeof, indices.ptr, GL_DYNAMIC_DRAW));
 
         payload_.indicesLength = cast(GLsizei) indices.length;
+    }
+
+    /**
+    Set up vertex attribute pointers.
+
+    Params:
+        program = shader program.
+    */
+    void vertexAttributePointers(scope ref const(ShaderProgram) program) scope
+    {
+        enforceGL!(() => glBindVertexArray(payload_.vaoID));
+        scope(exit) glBindVertexArray(0);
+
+        // select vertices buffer.
+        enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, payload_.verticesID));
+        scope(exit) glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        // set vertex attribute pointers.
+        static foreach (i, name; getVertexAttributeNames!T)
+        {
+            enforceGL!(() {
+                immutable location = program.getAttributeLocation(name);
+                alias FieldType = Fields!(T)[i];
+                immutable size = getFieldSize!FieldType;
+                immutable type = getGLType!FieldType;
+                immutable normalized = hasUDA!(mixin("T." ~ name), VertexAttribute.normalized) ? GL_TRUE : GL_FALSE;
+                auto offset = cast(const(GLvoid)*) mixin("T." ~ name ~ ".offsetof");
+                glVertexAttribPointer(location, size, type, normalized, T.sizeof, offset);
+            });
+
+            enforceGL!(() => glEnableVertexAttribArray(i));
+        }
+
+        // select indices buffer.
+        enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, payload_.indicesID));
+        scope(exit) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     /**
@@ -145,25 +195,6 @@ private:
     in (indicesID)
     in (vaoID)
     {
-        enforceGL!(() => glBindVertexArray(vaoID));
-        scope(exit) glBindVertexArray(0);
-
-        enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, verticesID));
-        scope(exit) glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        static foreach (i, name; getVertexAttributeNames!T)
-        {
-            enforceGL!(() {
-                alias FieldType = Fields!(T)[i];
-                immutable size = getFieldSize!FieldType;
-                immutable type = getGLType!FieldType;
-                immutable normalized = hasUDA!(mixin("T." ~ name), VertexAttribute.normalized) ? GL_TRUE : GL_FALSE;
-                auto offset = cast(const(GLvoid)*) mixin("T." ~ name ~ ".offsetof");
-                glVertexAttribPointer(i, size, type, normalized, T.sizeof, offset);
-            });
-
-            enforceGL!(() => glEnableVertexAttribArray(i));
-        }
 
         this.payload_ = Payload(verticesID, indicesID, vaoID);
     }
