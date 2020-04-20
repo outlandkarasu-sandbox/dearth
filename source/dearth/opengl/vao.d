@@ -44,7 +44,6 @@ import bindbc.opengl :
     glVertexAttribPointer;
 
 import dearth.opengl.exception : enforceGL;
-import dearth.opengl.shader : ShaderProgram;
 
 /**
 True if T can use vertex struct.
@@ -146,14 +145,11 @@ struct VertexArrayObject(T)
 
     /**
     Set up vertex attribute pointers.
-
-    Params:
-        program = shader program.
     */
-    void vertexAttributePointers(scope ref const(ShaderProgram) program) scope
+    void vertexAttributePointers() scope
     {
         enforceGL!(() => glBindVertexArray(payload_.vaoID));
-        scope(exit) glBindVertexArray(0);
+        scope(failure) glBindVertexArray(0);
 
         // select vertices buffer.
         enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, payload_.verticesID));
@@ -163,13 +159,12 @@ struct VertexArrayObject(T)
         static foreach (i, name; getVertexAttributeNames!T)
         {
             enforceGL!(() {
-                immutable location = program.getAttributeLocation(name);
                 alias FieldType = Fields!(T)[i];
                 immutable size = getFieldSize!FieldType;
                 immutable type = getGLType!FieldType;
                 immutable normalized = hasUDA!(mixin("T." ~ name), VertexAttribute.normalized) ? GL_TRUE : GL_FALSE;
                 auto offset = cast(const(GLvoid)*) mixin("T." ~ name ~ ".offsetof");
-                glVertexAttribPointer(location, size, type, normalized, T.sizeof, offset);
+                glVertexAttribPointer(i, size, type, normalized, T.sizeof, offset);
             });
 
             enforceGL!(() => glEnableVertexAttribArray(i));
@@ -178,6 +173,9 @@ struct VertexArrayObject(T)
         // select indices buffer.
         enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, payload_.indicesID));
         scope(exit) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        // setting up complete.
+        glBindVertexArray(0);
     }
 
     /**

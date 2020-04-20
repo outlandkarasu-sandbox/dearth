@@ -48,7 +48,7 @@ void main()
 
                 auto vertexShader = createVertexShader(import("earth.vert"));
                 auto fragmentShader = createFragmentShader(import("earth.frag"));
-                auto shaderProgram = createProgram(vertexShader, fragmentShader);
+                auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
                 auto vao = createVAO!Vertex();
 
                 scope vertices = [
@@ -58,7 +58,7 @@ void main()
                 ];
                 vao.loadVertices(vertices);
                 vao.loadIndices([0, 1, 2]);
-                vao.vertexAttributePointers(shaderProgram);
+                vao.vertexAttributePointers();
 
                 scope mainLoop = new MainLoop();
                 mainLoop.onDraw(() => draw(shaderProgram, vao)).run(window);
@@ -68,7 +68,7 @@ void main()
 }
 
 void draw(
-    scope ref ShaderProgram program,
+    scope ref ShaderProgram!Vertex program,
     scope ref VertexArrayObject!Vertex vao)
 {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
