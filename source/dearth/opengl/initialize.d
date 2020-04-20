@@ -10,6 +10,10 @@ import bindbc.opengl :
     loadOpenGL,
     unloadOpenGL;
 
+import bindbc.opengl :
+    glEnable,
+    GL_DEPTH_TEST;
+
 import dearth.opengl.exception : OpenGLException;
 
 /**
@@ -23,19 +27,14 @@ Throws:
 void duringOpenGL(scope void delegate(GLSupport) dg)
 {
     immutable support = loadOpenGL();
-    switch (support)
-    {
-        case GLSupport.noLibrary:
-            throw new OpenGLException("No library");
-        case GLSupport.badLibrary:
-            throw new OpenGLException("Bad library");
-        case GLSupport.noContext:
-            throw new OpenGLException("No context");
-        default:
-            break;
-    }
+    enforce!OpenGLException(support != GLSupport.noLibrary, "No library");
+    enforce!OpenGLException(support != GLSupport.badLibrary, "Bad library");
+    enforce!OpenGLException(support != GLSupport.noContext, "No context");
 
     scope(exit) unloadOpenGL();
+
+    // enable OpenGL functions.
+    glEnable(GL_DEPTH_TEST);
 
     dg(support);
 }
