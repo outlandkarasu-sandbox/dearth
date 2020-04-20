@@ -58,7 +58,6 @@ void main()
                 ];
                 vao.loadVertices(vertices);
                 vao.loadIndices([0, 1, 2]);
-                vao.vertexAttributePointers();
 
                 scope mainLoop = new MainLoop();
                 mainLoop.onDraw(() => draw(shaderProgram, vao)).run(window);

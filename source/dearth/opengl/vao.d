@@ -144,15 +144,25 @@ struct VertexArrayObject(T)
     }
 
     /**
-    Set up vertex attribute pointers.
+    Draw elements.
     */
-    void vertexAttributePointers() scope
+    void drawElements() scope
     {
-        enforceGL!(() => glBindVertexArray(payload_.vaoID));
+        enforceGL!(() => glDrawElements(GL_TRIANGLES, payload_.indicesLength, GL_UNSIGNED_SHORT, cast(const(GLvoid)*) 0));
+    }
+
+private:
+
+    this(GLuint verticesID, GLuint indicesID, GLuint vaoID) scope
+    in (verticesID)
+    in (indicesID)
+    in (vaoID)
+    {
+        enforceGL!(() => glBindVertexArray(vaoID));
         scope(failure) glBindVertexArray(0);
 
         // select vertices buffer.
-        enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, payload_.verticesID));
+        enforceGL!(() => glBindBuffer(GL_ARRAY_BUFFER, verticesID));
         scope(exit) glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // set vertex attribute pointers.
@@ -171,28 +181,11 @@ struct VertexArrayObject(T)
         }
 
         // select indices buffer.
-        enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, payload_.indicesID));
+        enforceGL!(() => glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesID));
         scope(exit) glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // setting up complete.
         glBindVertexArray(0);
-    }
-
-    /**
-    Draw elements.
-    */
-    void drawElements() scope
-    {
-        enforceGL!(() => glDrawElements(GL_TRIANGLES, payload_.indicesLength, GL_UNSIGNED_SHORT, cast(const(GLvoid)*) 0));
-    }
-
-private:
-
-    this(GLuint verticesID, GLuint indicesID, GLuint vaoID) scope
-    in (verticesID)
-    in (indicesID)
-    in (vaoID)
-    {
 
         this.payload_ = Payload(verticesID, indicesID, vaoID);
     }
