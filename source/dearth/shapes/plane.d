@@ -8,7 +8,7 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
-struct PlaneTriangleIndices
+private struct PlaneTriangleIndices
 {
 @nogc nothrow pure @safe:
 
@@ -47,6 +47,10 @@ private:
     auto indices = PlaneTriangleIndices(0, 2);
     scope size_t[6] expected = [0, 1, 3, 3, 2, 0];
     assert(indices.equal(expected[]));
+
+    auto indices11 = PlaneTriangleIndices(11, 22);
+    scope size_t[6] expected11 = [11 + 0, 11 + 1, 22 + 1, 22 + 1, 22 + 0, 11 + 0];
+    assert(indices11.equal(expected11[]));
 }
 
 /**
