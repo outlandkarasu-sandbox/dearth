@@ -82,6 +82,15 @@ struct Vector(size_t D, E = float)
         return this;
     }
 
+    /**
+    Returns:
+        elements slice.
+    */
+    const(E)[] opSlice() const nothrow pure return scope
+    {
+        return elements_[];
+    }
+
 private:
     E[D] elements_;
 }
@@ -132,5 +141,26 @@ private:
     assert(v[0].isClose(3.0));
     assert(v[1].isClose(5.0));
     assert(v[2].isClose(7.0));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose, isNaN;
+
+    Vector!3 v;
+    assert(v[0].isNaN);
+    assert(v[1].isNaN);
+    assert(v[2].isNaN);
+
+    immutable u = Vector!3([2, 3, 4]);
+    foreach (i, e; u[])
+    {
+        v[i] = e;
+    }
+
+    assert(v[0].isClose(2.0));
+    assert(v[1].isClose(3.0));
+    assert(v[2].isClose(4.0));
 }
 
