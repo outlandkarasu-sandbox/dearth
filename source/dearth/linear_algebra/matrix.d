@@ -157,6 +157,18 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         return this;
     }
 
+    /**
+    Matrix pointer.
+
+    Returns:
+        matrix pointer.
+    */
+    @property const(E)* ptr() const return scope
+    out (r; r != null)
+    {
+        return &elements_[0][0];
+    }
+
 private:
     E[ROWS][COLS] elements_;
 }
@@ -279,5 +291,14 @@ private:
     assert(m[0, 1].isClose(1.0));
     assert(m[1, 0].isClose(1.0));
     assert(m[1, 1].isClose(1.0));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(2, 2)([[1, 2], [3, 4]]);
+    assert(isClose(*(m.ptr), 1.0));
 }
 
