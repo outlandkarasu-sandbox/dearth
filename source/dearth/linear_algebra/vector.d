@@ -100,6 +100,18 @@ struct Vector(size_t D, E = float)
         return this;
     }
 
+    /**
+    Vector pointer.
+
+    Returns:
+        vector pointer.
+    */
+    @property const(E)* ptr() const return scope
+    out (r; r != null)
+    {
+        return &elements_[0];
+    }
+
 private:
     E[D] elements_;
 }
@@ -184,5 +196,14 @@ private:
     {
         assert(e.isClose(1.0));
     }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable v = Vector!3([1, 2, 3]);
+    assert(isClose(*(v.ptr), 1.0));
 }
 
