@@ -15,8 +15,6 @@ Params:
 */
 struct Vector(size_t D, E = float)
 {
-@nogc @safe:
-
     static assert(D > 0);
     static assert(isNumeric!E);
 
@@ -28,7 +26,7 @@ struct Vector(size_t D, E = float)
     Returns:
         element value.
     */
-    ref const(E) opIndex(size_t i) const nothrow pure return scope
+    ref const(E) opIndex(size_t i) const return scope
     in (i < D)
     {
         return elements_[i];
@@ -43,7 +41,7 @@ struct Vector(size_t D, E = float)
     Returns:
         assigned element value.
     */
-    ref const(E) opIndexAssign()(auto ref const(E) value, size_t i) nothrow pure return scope
+    ref const(E) opIndexAssign()(auto ref const(E) value, size_t i) return scope
     in (i < D)
     {
         return elements_[i] = value;
@@ -59,7 +57,7 @@ struct Vector(size_t D, E = float)
     Returns:
         assigned element value.
     */
-    ref const(E) opIndexOpAssign(string op)(auto ref const(E) value, size_t i) nothrow pure return scope
+    ref const(E) opIndexOpAssign(string op)(auto ref const(E) value, size_t i) return scope
     in (i < D)
     {
         return mixin("elements_[i] " ~ op ~ "= value");
@@ -73,7 +71,7 @@ struct Vector(size_t D, E = float)
     Returns:
         this vector.
     */
-    ref typeof(this) opOpAssign(string op)(auto ref const(typeof(this)) value) nothrow pure return scope
+    ref typeof(this) opOpAssign(string op)(auto ref const(typeof(this)) value) return scope
     {
         foreach (i, ref v; elements_)
         {
@@ -86,7 +84,7 @@ struct Vector(size_t D, E = float)
     Returns:
         elements slice.
     */
-    const(E)[] opSlice() const nothrow pure return scope
+    const(E)[] opSlice() const return scope
     {
         return elements_[];
     }
