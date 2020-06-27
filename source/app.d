@@ -23,6 +23,7 @@ import dearth :
     duringWindow,
     MainLoop,
     ShaderProgram,
+    ShapeVertex,
     VertexAttribute,
     VertexArrayObject;
 
@@ -50,16 +51,9 @@ void main()
                 auto vertexShader = createVertexShader(import("earth.vert"));
                 auto fragmentShader = createFragmentShader(import("earth.frag"));
                 auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
-                auto vao = createPlane!Vertex(10, 10);
-
-                scope vertices = [
-                    Vertex([-0.5,  0.5, 0.0], [255, 0, 0, 255]),
-                    Vertex([ 0.5,  0.5, 0.0], [0, 255, 0, 255]),
-                    Vertex([ 0.5, -0.5, 0.0], [0, 0, 255, 255]),
-                    Vertex([-0.5, -0.5, 0.0], [255, 0, 0, 255]),
-                ];
-                vao.loadVertices(vertices);
-                vao.loadIndices([0, 1, 2, 2, 3, 0]);
+                auto vao = createPlane!Vertex(
+                        2, 2,
+                        (ShapeVertex v) => Vertex([v.x - 0.5, v.y - 0.5, v.z], [255, 0, 0, 255]));
 
                 scope mainLoop = new MainLoop();
                 mainLoop.onDraw(() => draw(shaderProgram, vao)).run(window);
