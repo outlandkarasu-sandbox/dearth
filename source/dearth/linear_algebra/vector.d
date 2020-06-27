@@ -48,6 +48,22 @@ struct Vector(size_t D, E = float)
         return elements_[i] = value;
     }
 
+    /**
+    operation and assign an element.
+
+    Params:
+        op = operator.
+        value = element value.
+        i = index.
+    Returns:
+        assigned element value.
+    */
+    ref const(E) opIndexOpAssign(string op)(auto ref const(E) value, size_t i) nothrow pure return scope
+    in (i < D)
+    {
+        return mixin("elements_[i] " ~ op ~ "= value");
+    }
+
 private:
     E[D] elements_;
 }
@@ -76,5 +92,13 @@ nothrow pure unittest
     assert(v[0].isClose(2.0));
     assert(v[1].isClose(3.0));
     assert(v[2].isClose(4.0));
+
+    v[0] += 1.0f;
+    v[1] += 1.0f;
+    v[2] += 1.0f;
+
+    assert(v[0].isClose(3.0));
+    assert(v[1].isClose(4.0));
+    assert(v[2].isClose(5.0));
 }
 
