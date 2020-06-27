@@ -58,6 +58,23 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         return elements_[i][j] = value;
     }
 
+    /**
+    operation and assign an element.
+
+    Params:
+        op = operator.
+        value = element value.
+        i = row index.
+        j = column index.
+    Returns:
+        assigned element value.
+    */
+    ref const(E) opIndexOpAssign(string op)(auto ref const(E) value, size_t i, size_t j) return scope
+    in (i < ROWS)
+    in (j < COLS)
+    {
+        return mixin("elements_[i][j] " ~ op ~ "= value");
+    }
 private:
     E[COLS][ROWS] elements_;
 }
@@ -102,3 +119,22 @@ private:
     assert(m[1, 1].isClose(6));
 }
 
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    auto m = Matrix!(2, 2)([
+        [1, 2],
+        [3, 4]
+    ]);
+    m[0, 0] += 1.0f;
+    m[0, 1] += 1.0f;
+    m[1, 0] += 1.0f;
+    m[1, 1] += 1.0f;
+
+    assert(m[0, 0].isClose(2));
+    assert(m[0, 1].isClose(3));
+    assert(m[1, 0].isClose(4));
+    assert(m[1, 1].isClose(5));
+}
