@@ -5,7 +5,6 @@ module dearth.linear_algebra.vector;
 
 import std.traits : isNumeric;
 
-@safe @nogc:
 
 /**
 Vector structure.
@@ -16,6 +15,8 @@ Params:
 */
 struct Vector(size_t D, E = float)
 {
+@nogc @safe:
+
     static assert(D > 0);
     static assert(isNumeric!E);
 
@@ -64,12 +65,29 @@ struct Vector(size_t D, E = float)
         return mixin("elements_[i] " ~ op ~ "= value");
     }
 
+    /**
+    Operation and assign other vector.
+
+    Params:
+        value = other vetor value.
+    Returns:
+        this vector.
+    */
+    ref typeof(this) opOpAssign(string op)(auto ref const(typeof(this)) value) nothrow pure return scope
+    {
+        foreach (i, ref v; elements_)
+        {
+            mixin("v " ~ op ~ "= value[i];");
+        }
+        return this;
+    }
+
 private:
     E[D] elements_;
 }
 
 ///
-nothrow pure unittest
+@nogc nothrow pure @safe unittest
 {
     import std.math : isClose;
 
@@ -80,7 +98,7 @@ nothrow pure unittest
 }
 
 ///
-nothrow pure unittest
+@nogc nothrow pure @safe unittest
 {
     import std.math : isClose;
 
@@ -100,5 +118,19 @@ nothrow pure unittest
     assert(v[0].isClose(3.0));
     assert(v[1].isClose(4.0));
     assert(v[2].isClose(5.0));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    auto v = Vector!3([1, 2, 3]);
+    immutable u = Vector!3([2, 3, 4]);
+    v += u;
+
+    assert(v[0].isClose(3.0));
+    assert(v[1].isClose(5.0));
+    assert(v[2].isClose(7.0));
 }
 
