@@ -11,6 +11,8 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
+import dearth.shapes.types : ShapeVertex;
+
 ///
 private struct PlaneTriangleIndices
 {
@@ -174,18 +176,6 @@ private:
         4, 5, 8, 8, 7, 4,
     ];
     assert(indices22.equal(expected22[]));
-}
-
-/**
-Shape vertex parameter
-*/
-struct ShapeVertex
-{
-    float x;
-    float y;
-    float z;
-    size_t h;
-    size_t v;
 }
 
 /**
