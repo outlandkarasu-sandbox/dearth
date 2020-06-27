@@ -75,6 +75,27 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     {
         return mixin("elements_[i][j] " ~ op ~ "= value");
     }
+
+    /**
+    Operation and assign other vector.
+
+    Params:
+        value = other vetor value.
+    Returns:
+        this vector.
+    */
+    ref typeof(this) opOpAssign(string op)(auto ref const(typeof(this)) value) return scope
+    {
+        foreach (i, ref row; elements_)
+        {
+            foreach (j, ref v; row)
+            {
+                mixin("v " ~ op ~ "= value[i, j];");
+            }
+        }
+        return this;
+    }
+
 private:
     E[COLS][ROWS] elements_;
 }
@@ -138,3 +159,26 @@ private:
     assert(m[1, 0].isClose(4));
     assert(m[1, 1].isClose(5));
 }
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    auto m = Matrix!(2, 2)([
+        [1, 2],
+        [3, 4]
+    ]);
+    immutable t = Matrix!(2, 2)([
+        [3, 4],
+        [5, 6]
+    ]);
+
+    m += t;
+
+    assert(m[0, 0].isClose(4));
+    assert(m[0, 1].isClose(6));
+    assert(m[1, 0].isClose(8));
+    assert(m[1, 1].isClose(10));
+}
+
