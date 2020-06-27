@@ -88,6 +88,18 @@ struct Vector(size_t D, E = float)
         return elements_[];
     }
 
+    /**
+    Fill elements.
+
+    Params:
+        value = filler value.
+    */
+    ref typeof(this) fill()(auto ref const(E) value) return scope
+    {
+        elements_[] = value;
+        return this;
+    }
+
 private:
     E[D] elements_;
 }
@@ -159,5 +171,18 @@ private:
     assert(v[0].isClose(2.0));
     assert(v[1].isClose(3.0));
     assert(v[2].isClose(4.0));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose, isNaN;
+
+    Vector!3 v;
+    v.fill(1.0);
+    foreach (e; v[])
+    {
+        assert(e.isClose(1.0));
+    }
 }
 

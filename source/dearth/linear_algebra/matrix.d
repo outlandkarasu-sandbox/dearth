@@ -123,6 +123,21 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         return this;
     }
 
+    /**
+    Fill elements.
+
+    Params:
+        value = filler value.
+    */
+    ref typeof(this) fill()(auto ref const(E) value) return scope
+    {
+        foreach (ref row; elements_)
+        {
+            row[] = value;
+        }
+        return this;
+    }
+
 private:
     E[COLS][ROWS] elements_;
 }
@@ -231,5 +246,19 @@ private:
     assert(result[0, 1].isClose(3 * 4 + 4 * 7 + 5 * 9));
     assert(result[1, 0].isClose(6 * 3 + 7 * 6 + 8 * 8));
     assert(result[1, 1].isClose(6 * 4 + 7 * 7 + 8 * 9));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    auto m = Matrix!(2, 2)();
+    m.fill(1.0);
+
+    assert(m[0, 0].isClose(1.0));
+    assert(m[0, 1].isClose(1.0));
+    assert(m[1, 0].isClose(1.0));
+    assert(m[1, 1].isClose(1.0));
 }
 
