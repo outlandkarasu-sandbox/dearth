@@ -19,6 +19,25 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     static assert(COLS > 0);
     static assert(isNumeric!E);
 
+    /**
+    Initialize by row major elements.
+
+    Params:
+        elements = matrix row major elements.
+    */
+    static typeof(this) fromRows(scope const(E)[COLS][ROWS] elements)
+    {
+        auto m = typeof(this)();
+        foreach (j; 0 .. COLS)
+        {
+            foreach (i; 0 .. ROWS)
+            {
+                m.elements_[j][i] = elements[i][j];
+            }
+        }
+        return m;
+    }
+
     @property const scope
     {
         size_t rows() { return ROWS; }
@@ -38,7 +57,7 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     in (i < ROWS)
     in (j < COLS)
     {
-        return elements_[i][j];
+        return elements_[j][i];
     }
 
     /**
@@ -55,7 +74,7 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     in (i < ROWS)
     in (j < COLS)
     {
-        return elements_[i][j] = value;
+        return elements_[j][i] = value;
     }
 
     /**
@@ -73,7 +92,7 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     in (i < ROWS)
     in (j < COLS)
     {
-        return mixin("elements_[i][j] " ~ op ~ "= value");
+        return mixin("elements_[j][i] " ~ op ~ "= value");
     }
 
     /**
@@ -86,9 +105,9 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     */
     ref typeof(this) opOpAssign(string op)(auto ref const(typeof(this)) value) return scope
     {
-        foreach (i, ref row; elements_)
+        foreach (j, ref column; elements_)
         {
-            foreach (j, ref v; row)
+            foreach (i, ref v; column)
             {
                 mixin("v " ~ op ~ "= value[i, j];");
             }
@@ -109,9 +128,9 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
             auto ref const(Matrix!(ROWS, N, E1)) lhs,
             auto ref const(Matrix!(N, COLS, E2)) rhs) return scope
     {
-        foreach (i, ref row; elements_)
+        foreach (j, ref column; elements_)
         {
-            foreach (j, ref v; row)
+            foreach (i, ref v; column)
             {
                 v = cast(E) 0;
                 foreach (k; 0 .. N)
@@ -139,7 +158,7 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     }
 
 private:
-    E[COLS][ROWS] elements_;
+    E[ROWS][COLS] elements_;
 }
 
 ///
@@ -147,9 +166,9 @@ private:
 {
     import std.math : isClose;
 
-    immutable m = Matrix!(2, 3)([
+    immutable m = Matrix!(2, 3).fromRows([
         [1, 2, 3],
-        [4, 5, 6]
+        [4, 5, 6],
     ]);
     assert(m.rows == 2);
     assert(m.columns == 3);
@@ -167,7 +186,7 @@ private:
 {
     import std.math : isClose;
 
-    auto m = Matrix!(2, 2)([
+    auto m = Matrix!(2, 2).fromRows([
         [1, 2],
         [3, 4]
     ]);
@@ -187,7 +206,7 @@ private:
 {
     import std.math : isClose;
 
-    auto m = Matrix!(2, 2)([
+    auto m = Matrix!(2, 2).fromRows([
         [1, 2],
         [3, 4]
     ]);
@@ -207,11 +226,11 @@ private:
 {
     import std.math : isClose;
 
-    auto m = Matrix!(2, 2)([
+    auto m = Matrix!(2, 2).fromRows([
         [1, 2],
         [3, 4]
     ]);
-    immutable t = Matrix!(2, 2)([
+    immutable t = Matrix!(2, 2).fromRows([
         [3, 4],
         [5, 6]
     ]);
@@ -230,11 +249,11 @@ private:
     import std.math : isClose;
 
     auto result = Matrix!(2, 2)();
-    immutable lhs = Matrix!(2, 3)([
+    immutable lhs = Matrix!(2, 3).fromRows([
         [3, 4, 5],
         [6, 7, 8],
     ]);
-    immutable rhs = Matrix!(3, 2)([
+    immutable rhs = Matrix!(3, 2).fromRows([
         [3, 4],
         [6, 7],
         [8, 9],
