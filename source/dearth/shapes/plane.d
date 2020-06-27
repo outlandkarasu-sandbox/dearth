@@ -193,12 +193,13 @@ in (splitV > 0)
 {
     static assert(isVertexStruct!T);
 
-    immutable dx = 1.0 / splitH;
-    immutable dy = 1.0 / splitV;
-
     scope vertices = iota(splitV + 1)
         .map!(v => iota(splitH + 1)
-            .map!(h => dg(ShapeVertex(h * dx, v * dy, 0, h, v)))
+            .map!(h => dg(ShapeVertex(
+                h == splitH ? 1.0 : (1.0 * h / splitH),
+                v == splitV ? 1.0 : (1.0 * v / splitV),
+                0,
+                h, v)))
         )
         .joiner
         .array;
