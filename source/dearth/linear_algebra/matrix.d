@@ -150,9 +150,9 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
     */
     ref typeof(this) fill()(auto ref const(E) value) return scope
     {
-        foreach (ref row; elements_)
+        foreach (ref column; elements_)
         {
-            row[] = value;
+            column[] = value;
         }
         return this;
     }
