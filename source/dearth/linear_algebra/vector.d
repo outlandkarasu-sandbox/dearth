@@ -5,7 +5,6 @@ module dearth.linear_algebra.vector;
 
 import std.traits : isNumeric;
 
-
 /**
 Vector structure.
 
