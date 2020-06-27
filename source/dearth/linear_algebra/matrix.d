@@ -96,6 +96,33 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         return this;
     }
 
+    /**
+    Matrix multiplication.
+
+    Params:
+        lhs = left hand side matrix.
+        rhs = right hand side matrix.
+    Returns:
+        calculated this matrix.
+    */
+    ref typeof(this) mul(size_t N, E1, E2)(
+            auto ref const(Matrix!(ROWS, N, E1)) lhs,
+            auto ref const(Matrix!(N, COLS, E2)) rhs) return scope
+    {
+        foreach (i, ref row; elements_)
+        {
+            foreach (j, ref v; row)
+            {
+                v = cast(E) 0;
+                foreach (k; 0 .. N)
+                {
+                    v += lhs[i, k] * rhs[k, j];
+                }
+            }
+        }
+        return this;
+    }
+
 private:
     E[COLS][ROWS] elements_;
 }
@@ -180,5 +207,29 @@ private:
     assert(m[0, 1].isClose(6));
     assert(m[1, 0].isClose(8));
     assert(m[1, 1].isClose(10));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    auto result = Matrix!(2, 2)();
+    immutable lhs = Matrix!(2, 3)([
+        [3, 4, 5],
+        [6, 7, 8],
+    ]);
+    immutable rhs = Matrix!(3, 2)([
+        [3, 4],
+        [6, 7],
+        [8, 9],
+    ]);
+
+    result.mul(lhs, rhs);
+
+    assert(result[0, 0].isClose(3 * 3 + 4 * 6 + 5 * 8));
+    assert(result[0, 1].isClose(3 * 4 + 4 * 7 + 5 * 9));
+    assert(result[1, 0].isClose(6 * 3 + 7 * 6 + 8 * 8));
+    assert(result[1, 1].isClose(6 * 4 + 7 * 7 + 8 * 9));
 }
 
