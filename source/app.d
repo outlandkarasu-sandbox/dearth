@@ -22,6 +22,7 @@ import dearth :
     duringSDL,
     duringWindow,
     MainLoop,
+    Mat4,
     ShaderProgram,
     ShapeVertex,
     VertexAttribute,
@@ -70,8 +71,17 @@ void draw(
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scope(exit) glFlush();
 
+    immutable modelLocation = program.getUniformLocation("modelMatrix");
+    immutable viewLocation = program.getUniformLocation("viewMatrix");
+    immutable projectionLocation = program.getUniformLocation("projectionMatrix");
+
     program.duringUse(()
     {
+        immutable m = Mat4.unit;
+        program
+            .uniform(modelLocation, m)
+            .uniform(viewLocation, m)
+            .uniform(projectionLocation, m);
         vao.duringBind(()
         {
             vao.drawElements();

@@ -9,10 +9,12 @@ import std.traits :
     isCallable;
 import std.typecons :
     RefCounted,
-    RefCountedAutoInitialize;
+    RefCountedAutoInitialize,
+    Typedef;
 
 import bindbc.opengl :
     GL_COMPILE_STATUS,
+    GL_CURRENT_PROGRAM,
     GL_FALSE,
     GL_FRAGMENT_SHADER,
     GL_INFO_LOG_LENGTH,
@@ -32,18 +34,23 @@ import bindbc.opengl :
     glDeleteProgram,
     glDeleteShader,
     glDetachShader,
+    glGetIntegerv,
     glGetProgramInfoLog,
     glGetProgramiv,
     glGetShaderInfoLog,
     glGetShaderiv,
+    glGetUniformLocation,
     glLinkProgram,
     glShaderSource,
-    glUseProgram;
+    glUseProgram,
+    glUniformMatrix4fv;
 
 import dearth.opengl.exception :
     checkGLError,
     enforceGL,
     OpenGLException;
+import dearth.opengl.types :
+    Mat4;
 import dearth.opengl.vao :
     isVertexStruct,
     getVertexAttributeNames;
@@ -141,6 +148,8 @@ FragmentShader createFragmentShader(string file = __FILE__, size_t line = __LINE
     return FragmentShader(file, line, source);
 }
 
+alias UniformLocation = Typedef!(GLint, -1, "UniformLocation");
+
 /**
 Shader program.
 
@@ -168,6 +177,47 @@ struct ShaderProgram(T)
         scope(exit) glUseProgram(0);
 
         dg();
+    }
+
+    /**
+    Get uniform location by name.
+
+    Params:
+        name = uniform variable name.
+    Returns:
+        uniform location.
+    Throws:
+        OpenGLException if failed.
+    */
+    UniformLocation getUniformLocation(scope string name) const scope
+    in (name)
+    out (r; r != UniformLocation.init)
+    {
+        auto result = enforceGL!(() => glGetUniformLocation(payload_.id, toStringz(name)));
+        if (result < 0)
+        {
+            throw new OpenGLException("Uniform not found: " ~ name);
+        }
+        return UniformLocation(result);
+    }
+
+    /**
+    Set uniform variable.
+
+    Params:
+        location = uniform location.
+        value = uniform value.
+    Returns:
+        this object.
+    Throws:
+        OpenGLException if failed.
+    */
+    ref typeof(this) uniform()(UniformLocation location, auto ref scope const(Mat4) value) scope return
+    in (isCurrent)
+    {
+        enforceGL!(() => glUniformMatrix4fv(
+            cast(GLint) location, 1, GL_FALSE, value.ptr));
+        return this;
     }
 
 private:
@@ -213,6 +263,13 @@ private:
         }
 
         this.payload_ = Payload(id);
+    }
+
+    @property bool isCurrent() const scope
+    {
+        GLint result = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &result);
+        return result == payload_.id;
     }
 
     struct Payload
