@@ -36,17 +36,20 @@ struct Vertex
     ubyte[4] color;
 }
 
+enum WINDOW_WIDTH = 640;
+enum WINDOW_HEIGHT = 480;
+
 void main()
 {
     duringSDL((sdlSupport)
     {
-        duringWindow("", 0, 0, 640, 480, (window)
+        duringWindow("", 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, (window)
         {
             duringOpenGL((glSupport)
             {
                 writefln("%s,%s", sdlSupport, glSupport);
 
-                glViewport(0, 0, 640, 480);
+                glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
                 glEnable(GL_DEPTH_TEST);
 
                 auto vertexShader = createVertexShader(import("earth.vert"));
@@ -57,7 +60,7 @@ void main()
                         (ShapeVertex v) => Vertex([v.x - 0.5, v.y - 0.5, v.z], [255, 0, 0, 255]));
 
                 scope mainLoop = new MainLoop();
-                mainLoop.onDraw(() => draw(shaderProgram, vao)).run(window);
+                mainLoop.onDraw(() => draw(shaderProgram, vao, WINDOW_WIDTH, WINDOW_HEIGHT)).run(window);
             });
         });
     });
@@ -65,7 +68,9 @@ void main()
 
 void draw(
     scope ref ShaderProgram!Vertex program,
-    scope ref VertexArrayObject!Vertex vao)
+    scope ref VertexArrayObject!Vertex vao,
+    uint width,
+    uint height)
 {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -78,10 +83,12 @@ void draw(
     program.duringUse(()
     {
         immutable m = Mat4.unit;
+        Mat4 projection = m;
+        projection[0, 0] = (cast(float) height) / width;
         program
             .uniform(modelLocation, m)
             .uniform(viewLocation, m)
-            .uniform(projectionLocation, m);
+            .uniform(projectionLocation, projection);
         vao.duringBind(()
         {
             vao.drawElements();
