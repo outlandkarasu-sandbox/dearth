@@ -4,7 +4,7 @@ OpenGL exception module.
 module dearth.opengl.exception;
 
 import std.exception : basicExceptionCtors;
-import std.traits : isCallable;
+import std.traits : isCallable, ReturnType;
 
 import bindbc.opengl :
     glGetError,
@@ -36,10 +36,29 @@ Params:
 Throws:
     OpenGLException if failed.
 */
-void enforceGL(alias F, string file = __FILE__, size_t line = __LINE__)() if (isCallable!F)
+void enforceGL(alias F, string file = __FILE__, size_t line = __LINE__)() if (isCallable!F && is(ReturnType!F == void))
 {
     F();
     checkGLError!(file, line)();
+}
+
+/**
+Enforce OpenGL result.
+
+Params:
+    F = calling function.
+    file = file name.
+    line = line no.
+Returns:
+    function result.
+Throws:
+    OpenGLException if failed.
+*/
+ReturnType!F enforceGL(alias F, string file = __FILE__, size_t line = __LINE__)() if (isCallable!F && !is(ReturnType!F == void))
+{
+    auto result = F();
+    checkGLError!(file, line)();
+    return result;
 }
 
 /**
