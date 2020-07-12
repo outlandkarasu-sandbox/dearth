@@ -24,6 +24,8 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
 
     Params:
         elements = matrix row major elements.
+    Returns:
+        initialized matrix.
     */
     static typeof(this) fromRows(scope const(E)[COLS][ROWS] elements)
     {
@@ -36,6 +38,28 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
             }
         }
         return m;
+    }
+
+    static if(COLS == ROWS)
+    {
+        /**
+        Initialize unit matrix.
+
+        Returns:
+            unit matrix;
+        */
+        static typeof(this) unit()
+        {
+            auto m = typeof(this)();
+            foreach (j; 0 .. COLS)
+            {
+                foreach (i; 0 .. ROWS)
+                {
+                    m.elements_[j][i] = cast(E)((i == j) ? 1 : 0);
+                }
+            }
+            return m;
+        }
     }
 
     @property const scope
@@ -191,6 +215,26 @@ private:
     assert(m[1, 0].isClose(4));
     assert(m[1, 1].isClose(5));
     assert(m[1, 2].isClose(6));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(3, 3).unit;
+    assert(m.rows == 3);
+    assert(m.columns == 3);
+
+    assert(m[0, 0].isClose(1));
+    assert(m[0, 1].isClose(0));
+    assert(m[0, 2].isClose(0));
+    assert(m[1, 0].isClose(0));
+    assert(m[1, 1].isClose(1));
+    assert(m[1, 2].isClose(0));
+    assert(m[2, 0].isClose(0));
+    assert(m[2, 1].isClose(0));
+    assert(m[2, 2].isClose(1));
 }
 
 ///
