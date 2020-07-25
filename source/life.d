@@ -75,6 +75,44 @@ class World
 
 private:
 
+    /**
+    Count lives around cell.
+
+    Params:
+        x = x position.
+        y = y position.
+    Returns:
+        lives count around cell.
+    */
+    size_t count(size_t x, size_t y) const @nogc nothrow pure scope
+    in (x < width_)
+    in (y < height_)
+    {
+        immutable rightEdge = width_ - 1;
+        immutable bottomEdge = height_ - 1;
+
+        immutable left = (x == 0) ? rightEdge : x - 1;
+        immutable right = (x == rightEdge) ? 0 : x + 1;
+        immutable up = (y == 0) ? bottomEdge : y - 1;
+        immutable down = (y == bottomEdge) ? 0 : y + 1;
+
+        size_t result = 0;
+
+        if (this[left, up]) ++result;
+        if (this[x, up]) ++result;
+        if (this[right, up]) ++result;
+
+        if (this[left, y]) ++result;
+        if (this[x, y]) ++result;
+        if (this[right, y]) ++result;
+
+        if (this[left, down]) ++result;
+        if (this[x, down]) ++result;
+        if (this[right, down]) ++result;
+
+        return result;
+    }
+
     Life[] currentPlane_;
     Life[] plane1_;
     Life[] plane2_;
@@ -83,7 +121,7 @@ private:
 }
 
 ///
-unittest
+nothrow pure unittest
 {
     scope world = new World(100, 100);
     assert(world[0, 0] == World.Life.empty);
@@ -96,5 +134,29 @@ unittest
     world[99, 99] = World.Life.exist;
     assert(world[0, 0] == World.Life.exist);
     assert(world[99, 99] == World.Life.exist);
+}
+
+nothrow pure unittest
+{
+    scope world = new World(100, 100);
+    world[0, 0] = World.Life.exist;
+
+    assert(world.count(98, 0) == 0);
+    assert(world.count(99, 0) == 1);
+    assert(world.count(0, 0) == 1);
+    assert(world.count(1, 0) == 1);
+    assert(world.count(2, 0) == 0);
+
+    assert(world.count(98, 1) == 0);
+    assert(world.count(99, 1) == 1);
+    assert(world.count(0, 1) == 1);
+    assert(world.count(1, 1) == 1);
+    assert(world.count(2, 1) == 0);
+
+    assert(world.count(98, 99) == 0);
+    assert(world.count(99, 99) == 1);
+    assert(world.count(0, 99) == 1);
+    assert(world.count(1, 99) == 1);
+    assert(world.count(2, 99) == 0);
 }
 
