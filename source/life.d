@@ -27,7 +27,7 @@ class World
     {
         this.plane1_ = new Life[w * h];
         this.plane1_[] = Life.empty;
-        this.plane2_ = plane2_.dup;
+        this.plane2_ = plane1_.dup;
         this.currentPlane_ = this.plane1_;
         this.width_ = w;
         this.height_ = h;
@@ -69,8 +69,35 @@ class World
     /**
     Move to next generation state.
     */
-    void next() @nogc nothrow pure scope
+    void nextGeneration() @nogc nothrow pure scope
     {
+        scope next = this.nextPlane;
+
+        foreach (y; 0 .. height_)
+        {
+            immutable rowOffset = y * width_;
+            foreach (x; 0 .. width_)
+            {
+                immutable current = this[x, y];
+                immutable n = count(x, y);
+                Life nextLife = current;
+                if (current)
+                {
+                    if (n < 2 || 3 < n)
+                    {
+                        nextLife = Life.empty;
+                    }
+                }
+                else if (n == 3)
+                {
+                    nextLife = Life.exist;
+                }
+
+                next[rowOffset + x] = nextLife;
+            }
+        }
+
+        this.currentPlane_ = (currentPlane_ is plane1_) ? plane2_ : plane1_;
     }
 
 private:
@@ -103,7 +130,7 @@ private:
         if (this[right, up]) ++result;
 
         if (this[left, y]) ++result;
-        if (this[x, y]) ++result;
+        // if (this[x, y]) ++result;
         if (this[right, y]) ++result;
 
         if (this[left, down]) ++result;
@@ -111,6 +138,11 @@ private:
         if (this[right, down]) ++result;
 
         return result;
+    }
+
+    @property Life[] nextPlane() @nogc nothrow pure return scope
+    {
+        return (currentPlane_ is plane1_) ? plane2_ : plane1_;
     }
 
     Life[] currentPlane_;
@@ -143,7 +175,7 @@ nothrow pure unittest
 
     assert(world.count(98, 0) == 0);
     assert(world.count(99, 0) == 1);
-    assert(world.count(0, 0) == 1);
+    assert(world.count(0, 0) == 0);
     assert(world.count(1, 0) == 1);
     assert(world.count(2, 0) == 0);
 
@@ -158,5 +190,28 @@ nothrow pure unittest
     assert(world.count(0, 99) == 1);
     assert(world.count(1, 99) == 1);
     assert(world.count(2, 99) == 0);
+}
+
+///
+nothrow pure unittest
+{
+    scope world = new World(100, 100);
+    world[0, 0] = World.Life.exist;
+    world[1, 0] = World.Life.exist;
+    world[2, 0] = World.Life.exist;
+
+    world.nextGeneration();
+
+    assert(!world[0, 0]);
+    assert( world[1, 0]);
+    assert(!world[2, 0]);
+
+    assert(!world[0, 1]);
+    assert( world[1, 1]);
+    assert(!world[2, 1]);
+
+    assert(!world[0, 99]);
+    assert( world[1, 99]);
+    assert(!world[2, 99]);
 }
 
