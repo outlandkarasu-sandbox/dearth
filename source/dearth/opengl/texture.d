@@ -17,12 +17,14 @@ import bindbc.opengl :
     GL_NEAREST_MIPMAP_LINEAR,
     GL_NEAREST_MIPMAP_NEAREST,
     GL_REPEAT,
+    GL_RGBA,
     GL_TEXTURE_2D,
     GL_TEXTURE_CUBE_MAP,
     GL_TEXTURE_MIN_FILTER,
     GL_TEXTURE_MAG_FILTER,
     GL_TEXTURE_WRAP_S,
     GL_TEXTURE_WRAP_T,
+    GL_UNSIGNED_BYTE,
     glActiveTexture,
     glBindTexture,
     glDeleteTextures,
@@ -62,17 +64,59 @@ enum TextureWrap
 }
 
 /**
+RGBA pixel struct.
+*/
+struct PixelRGBA
+{
+    enum PixelFormat = GL_RGBA;
+    enum PixelType = GL_UNSIGNED_BYTE;
+
+    ubyte r;
+    ubyte g;
+    ubyte b;
+    ubyte a;
+}
+
+enum isPixelType(T) = is(T == PixelRGBA);
+
+/**
 Texture struct.
 */
 struct Texture
 {
     @disable this();
 
+    /**
+    Draw pixels to texture.
+
+    Params:
+        T = pixel type.
+        width = image width.
+        height = image height.
+        pixels = image pixels.
+    */
+    void image2D(T)(uint width, uint height, scope const(T)[] pixels) scope if(isPixelType!T)
+    in (pixels.length == width * height)
+    {
+        enforceGL!(() => glBindTexture(payload_.type, payload_.textureID));
+        scope(exit) glBindTexture(payload_.type, 0);
+
+        enforceGL!(() => glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            T.PixelFormat,
+            width,
+            height,
+            0,
+            T.PixelFormat,
+            T.PixelType,
+            pixels.ptr));
+    }
+
 private:
 
     this(GLuint textureID, TextureType type, TextureMinFilter minFilter, TextureMagFilter magFilter, TextureWrap wrapS, TextureWrap wrapT) scope
     {
-
         enforceGL!(() => glBindTexture(type, textureID));
         scope(exit) glBindTexture(type, 0);
 
