@@ -12,7 +12,9 @@ import bindbc.opengl :
 
 import bindbc.opengl :
     glEnable,
-    GL_DEPTH_TEST;
+    glPixelStorei,
+    GL_DEPTH_TEST,
+    GL_UNPACK_ALIGNMENT;
 
 import dearth.opengl.exception : OpenGLException;
 
@@ -35,6 +37,9 @@ void duringOpenGL(scope void delegate(GLSupport) dg)
 
     // enable OpenGL functions.
     glEnable(GL_DEPTH_TEST);
+
+    // setting up texture pixel store alignment.
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     dg(support);
 }
