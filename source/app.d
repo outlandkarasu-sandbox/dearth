@@ -40,7 +40,7 @@ struct Vertex
     float[3] position;
 
     @(VertexAttribute.normalized)
-    ubyte[4] color;
+    ubyte[2] uv;
 }
 
 enum WINDOW_WIDTH = 640;
@@ -64,7 +64,9 @@ void main()
                 auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
                 auto vao = createPlane!Vertex(
                         2, 2,
-                        (ShapeVertex v) => Vertex([v.x - 0.5, v.y - 0.5, v.z], [255, 0, 0, 255]));
+                        (ShapeVertex v) => Vertex(
+                            [v.x - 0.5, v.y - 0.5, v.z],
+                            [cast(ubyte)(v.h * ubyte.max / 2), cast(ubyte)(v.v * ubyte.max / 2)]));
 
                 auto texture = createTexture(
                         TextureType.texture2D,
