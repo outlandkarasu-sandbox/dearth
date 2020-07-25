@@ -6,6 +6,8 @@ module dearth.opengl.texture;
 import std.typecons :
     RefCounted,
     RefCountedAutoInitialize;
+import std.traits:
+    isCallable;
 
 import bindbc.opengl :
     GL_CLAMP_TO_EDGE,
@@ -43,17 +45,17 @@ enum TextureType
 enum TextureMinFilter
 {
     nearest = GL_NEAREST,
-    liner = GL_LINEAR,
+    linear = GL_LINEAR,
     nearestMipmapNearest = GL_NEAREST_MIPMAP_NEAREST,
     linearMipmapNearest = GL_LINEAR_MIPMAP_NEAREST,
-    nearestMipmapLiner = GL_NEAREST_MIPMAP_LINEAR,
-    linearMipamapLiner = GL_LINEAR_MIPMAP_LINEAR,
+    nearestMipmapLinear = GL_NEAREST_MIPMAP_LINEAR,
+    linearMipamapLinear = GL_LINEAR_MIPMAP_LINEAR,
 }
 
 enum TextureMagFilter
 {
     nearest = GL_NEAREST,
-    liner = GL_LINEAR,
+    linear = GL_LINEAR,
 }
 
 enum TextureWrap
@@ -87,6 +89,24 @@ struct Texture
     @disable this();
 
     /**
+    During bind texture.
+
+    Params:
+        Dg = delegate type.
+        dg = delegate.
+    */
+    void duringBind(Dg)(scope Dg dg) const scope
+    in (dg)
+    {
+        static assert(isCallable!Dg);
+
+        enforceGL!(() => glBindTexture(payload_.type, payload_.textureID));
+        scope(exit) glBindTexture(payload_.type, 0);
+
+        dg();
+    }
+
+    /**
     Draw pixels to texture.
 
     Params:
@@ -98,19 +118,18 @@ struct Texture
     void image2D(T)(uint width, uint height, scope const(T)[] pixels) scope if(isPixelType!T)
     in (pixels.length == width * height)
     {
-        enforceGL!(() => glBindTexture(payload_.type, payload_.textureID));
-        scope(exit) glBindTexture(payload_.type, 0);
-
-        enforceGL!(() => glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            T.PixelFormat,
-            width,
-            height,
-            0,
-            T.PixelFormat,
-            T.PixelType,
-            pixels.ptr));
+        duringBind(() {
+            enforceGL!(() => glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                T.PixelFormat,
+                width,
+                height,
+                0,
+                T.PixelFormat,
+                T.PixelType,
+                pixels.ptr));
+        });
     }
 
 private:
