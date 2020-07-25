@@ -31,6 +31,7 @@ import bindbc.opengl :
     glBindTexture,
     glDeleteTextures,
     glGenTextures,
+    glTexImage2D,
     glTexParameteri,
     GLuint;
 
@@ -118,7 +119,7 @@ struct Texture
     void image2D(T)(uint width, uint height, scope const(T)[] pixels) scope if(isPixelType!T)
     in (pixels.length == width * height)
     {
-        duringBind(() {
+        duringBind({
             enforceGL!(() => glTexImage2D(
                 GL_TEXTURE_2D,
                 0,
