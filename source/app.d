@@ -16,6 +16,7 @@ import dearth :
     createFragmentShader,
     createPlane,
     createProgram,
+    createTexture,
     createVAO,
     createVertexShader,
     duringOpenGL,
@@ -23,8 +24,14 @@ import dearth :
     duringWindow,
     MainLoop,
     Mat4,
+    PixelRGBA,
     ShaderProgram,
     ShapeVertex,
+    Texture,
+    TextureType,
+    TextureMinFilter,
+    TextureMagFilter,
+    TextureWrap,
     VertexAttribute,
     VertexArrayObject;
 
@@ -59,8 +66,31 @@ void main()
                         2, 2,
                         (ShapeVertex v) => Vertex([v.x - 0.5, v.y - 0.5, v.z], [255, 0, 0, 255]));
 
+                auto texture = createTexture(
+                        TextureType.texture2D,
+                        TextureMinFilter.linear,
+                        TextureMagFilter.linear,
+                        TextureWrap.repeat,
+                        TextureWrap.repeat);
+
+                immutable PixelRGBA[4] pixels = [
+                    PixelRGBA(255,   0,   0, 255),
+                    PixelRGBA(  0, 255,   0, 255),
+                    PixelRGBA(  0,   0, 255, 255),
+                    PixelRGBA(  0,   0,   0, 255),
+                ];
+                texture.image2D(2, 2, pixels[]);
+                texture.activeAndBind(0);
+
                 scope mainLoop = new MainLoop();
-                mainLoop.onDraw(() => draw(shaderProgram, vao, WINDOW_WIDTH, WINDOW_HEIGHT)).run(window);
+                mainLoop.onDraw({
+                    draw(
+                        shaderProgram,
+                        vao,
+                        texture,
+                        WINDOW_WIDTH,
+                        WINDOW_HEIGHT);
+                }).run(window);
             });
         });
     });
@@ -69,6 +99,7 @@ void main()
 void draw(
     scope ref ShaderProgram!Vertex program,
     scope ref VertexArrayObject!Vertex vao,
+    scope ref Texture texture,
     uint width,
     uint height)
 {
@@ -80,8 +111,7 @@ void draw(
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
 
-    program.duringUse(()
-    {
+    program.duringUse({
         immutable m = Mat4.unit;
         Mat4 projection = m;
         projection[0, 0] = (cast(float) height) / width;

@@ -26,6 +26,7 @@ import bindbc.opengl :
     GL_TEXTURE_MAG_FILTER,
     GL_TEXTURE_WRAP_S,
     GL_TEXTURE_WRAP_T,
+    GL_TEXTURE0,
     GL_UNSIGNED_BYTE,
     glActiveTexture,
     glBindTexture,
@@ -105,6 +106,18 @@ struct Texture
         scope(exit) glBindTexture(payload_.type, 0);
 
         dg();
+    }
+
+    /**
+    Activate texture unit and bind this texture.
+
+    Params:
+        textureUnit = texture unit number.
+    */
+    void activeAndBind(uint textureUnit) scope
+    {
+        enforceGL!(() => glActiveTexture(GL_TEXTURE0 + textureUnit));
+        enforceGL!(() => glBindTexture(payload_.type, payload_.textureID));
     }
 
     /**
