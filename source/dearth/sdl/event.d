@@ -94,6 +94,15 @@ class MainLoop
             draw_ = draw;
             return this;
         }
+
+        /**
+        Returns:
+            actual FPS.
+        */
+        float actualFPS() @nogc const
+        {
+            return actualFPS_;
+        }
     }
 
     /**
@@ -108,9 +117,23 @@ class MainLoop
         immutable performanceFrequency = SDL_GetPerformanceFrequency();
         immutable countPerFrame = performanceFrequency / fps_;
 
+        auto fpsStart = SDL_GetPerformanceFrequency();
+        uint frameCount = 0;
+        immutable actualFPSSeconds = 3.0f;
+        immutable actualFPSInterval = actualFPSSeconds * performanceFrequency;
+        actualFPS_ = 0.0f;
+
         for (SDL_Event event; ;)
         {
             immutable frameStart = SDL_GetPerformanceCounter();
+
+            // update actual FPS.
+            if (frameStart - fpsStart > actualFPSInterval)
+            {
+                actualFPS_ = frameCount / actualFPSSeconds;
+                fpsStart = frameStart;
+                frameCount = 0;
+            }
 
             // processing pushed events.
             while (SDL_PollEvent(&event))
@@ -130,6 +153,7 @@ class MainLoop
             immutable drawDelay = SDL_GetPerformanceCounter() - frameStart;
             immutable waitDelay = (countPerFrame < drawDelay)
                 ? 0 : cast(uint)((countPerFrame - drawDelay) * 1000.0 / performanceFrequency);
+            ++frameCount;
             SDL_Delay(waitDelay);
         }
     }
@@ -139,6 +163,7 @@ private:
     alias EventHandler = EventHandlerResult delegate(scope ref const(SDL_Event));
 
     float fps_ = 60.0f;
+    float actualFPS_ = 0.0f;
 
     EventHandler[int] eventHandlers_;
     void delegate() draw_;

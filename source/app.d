@@ -98,7 +98,15 @@ void main()
                 immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
 
                 scope mainLoop = new MainLoop();
+                float actualFPS = mainLoop.actualFPS;
                 mainLoop.onDraw({
+                    // show FPS.
+                    if (actualFPS != mainLoop.actualFPS)
+                    {
+                        writefln("FPS: %s", actualFPS);
+                        actualFPS = mainLoop.actualFPS;
+                    }
+
                     world.nextGeneration();
                     foreach (size_t x, size_t y, ref const(World.Life) life; world)
                     {
