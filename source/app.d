@@ -1,4 +1,5 @@
 import std.stdio : writefln;
+import std.random : choice;
 
 import bindbc.sdl : SDL_QuitEvent;
 import bindbc.opengl :
@@ -35,6 +36,8 @@ import dearth :
     VertexAttribute,
     VertexArrayObject;
 
+import life : World;
+
 struct Vertex
 {
     float[3] position;
@@ -45,6 +48,9 @@ struct Vertex
 
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
+
+enum WORLD_WIDTH = 64;
+enum WORLD_HEIGHT = 64;
 
 void main()
 {
@@ -66,7 +72,10 @@ void main()
                         2, 2,
                         (ShapeVertex v) => Vertex(
                             [v.x - 0.5, v.y - 0.5, v.z],
-                            [cast(ubyte)(v.h * ubyte.max / 2), cast(ubyte)(v.v * ubyte.max / 2)]));
+                            [
+                                cast(ubyte)(v.h * ubyte.max / 2),
+                                cast(ubyte)(v.v * ubyte.max / 2),
+                            ]));
 
                 auto texture = createTexture(
                         TextureType.texture2D,
@@ -75,17 +84,38 @@ void main()
                         TextureWrap.repeat,
                         TextureWrap.repeat);
 
-                immutable PixelRGBA[4] pixels = [
-                    PixelRGBA(255,   0,   0, 255),
-                    PixelRGBA(  0, 255,   0, 255),
-                    PixelRGBA(  0,   0, 255, 255),
-                    PixelRGBA(  0,   0,   0, 255),
-                ];
-                texture.image2D(2, 2, pixels[]);
-                texture.activeAndBind(0);
+
+                // initialize world.
+                scope world = new World(WORLD_WIDTH, WORLD_HEIGHT);
+                scope lifeChoices = [World.Life.empty, World.Life.exist];
+                foreach (y; 0 .. WORLD_HEIGHT)
+                {
+                    foreach (x; 0 .. WORLD_WIDTH)
+                    {
+                        world[x, y] = lifeChoices.choice();
+                    }
+                }
+
+                PixelRGBA[WORLD_WIDTH * WORLD_HEIGHT] pixels;
+                immutable existsPixel = PixelRGBA(255, 0, 0, 255);
+                immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
 
                 scope mainLoop = new MainLoop();
                 mainLoop.onDraw({
+                    world.nextGeneration();
+                    foreach (y; 0 .. WORLD_HEIGHT)
+                    {
+                        immutable rowIndex = y * WORLD_WIDTH;
+                        foreach (x; 0 .. WORLD_WIDTH)
+                        {
+                            pixels[rowIndex + x] = (world[x, y] == World.Life.exist)
+                                ? existsPixel : emptyPixel;
+                        }
+                    }
+
+                    texture.image2D(WORLD_WIDTH, WORLD_HEIGHT, pixels[]);
+                    texture.activeAndBind(0);
+
                     draw(
                         shaderProgram,
                         vao,

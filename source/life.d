@@ -50,6 +50,7 @@ class World
         currentPlane_[y * width_ + x] = life;
         return life;
     }
+
     /**
     Get life.
 
