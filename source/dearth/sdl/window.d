@@ -37,7 +37,7 @@ Params:
     dg = delegate.
 */
 void duringWindow(
-    scope string title,
+    scope const(char)[] title,
     int x,
     int y,
     uint w,

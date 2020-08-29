@@ -50,6 +50,7 @@ class World
         currentPlane_[y * width_ + x] = life;
         return life;
     }
+
     /**
     Get life.
 
@@ -64,6 +65,32 @@ class World
     in (y < height_)
     {
         return currentPlane_[y * width_ + x];
+    }
+
+    /**
+    foreach over world.
+
+    Params:
+        Dg = delegate type
+        dg = foreach delegate.
+    Returns:
+        foreach result.
+    */
+    int opApply(Dg)(scope Dg dg) @trusted
+    {
+        foreach (y; 0 .. height_)
+        {
+            immutable rowIndex = y * width_;
+            foreach (x; 0 .. width_)
+            {
+                immutable result = dg(x, y, currentPlane_[rowIndex + x]);
+                if (result)
+                {
+                    return result;
+                }
+            }
+        }
+        return 0;
     }
 
     /**

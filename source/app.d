@@ -1,4 +1,5 @@
 import std.stdio : writefln;
+import std.random : choice;
 
 import bindbc.sdl : SDL_QuitEvent;
 import bindbc.opengl :
@@ -19,10 +20,7 @@ import dearth :
     createTexture,
     createVAO,
     createVertexShader,
-    duringOpenGL,
-    duringSDL,
-    duringWindow,
-    MainLoop,
+    dearthMain,
     Mat4,
     PixelRGBA,
     ShaderProgram,
@@ -35,6 +33,8 @@ import dearth :
     VertexAttribute,
     VertexArrayObject;
 
+import life : World;
+
 struct Vertex
 {
     float[3] position;
@@ -46,54 +46,74 @@ struct Vertex
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
 
+enum WORLD_WIDTH = 512;
+enum WORLD_HEIGHT = 512;
+
 void main()
 {
-    duringSDL((sdlSupport)
+    dearthMain("", 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, (scope info)
     {
-        duringWindow("", 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, (window)
+        writefln("%s,%s", info.sdlSupport, info.glSupport);
+        glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+        glEnable(GL_DEPTH_TEST);
+
+        auto vertexShader = createVertexShader(import("earth.vert"));
+        auto fragmentShader = createFragmentShader(import("earth.frag"));
+        auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
+        auto vao = createPlane!Vertex(
+            2, 2,
+            (ShapeVertex v) => Vertex(
+                [v.x - 0.5, v.y - 0.5, v.z],
+                [
+                    cast(ubyte)(v.h * ubyte.max / 2),
+                    cast(ubyte)(v.v * ubyte.max / 2),
+                ]));
+
+        auto texture = createTexture(
+            TextureType.texture2D,
+            TextureMinFilter.linear,
+            TextureMagFilter.linear,
+            TextureWrap.repeat,
+            TextureWrap.repeat);
+
+        // initialize world.
+        scope world = new World(WORLD_WIDTH, WORLD_HEIGHT);
+        scope lifeChoices = [World.Life.empty, World.Life.exist];
+        foreach (size_t x, size_t y, ref World.Life life; world)
         {
-            duringOpenGL((glSupport)
+            life = lifeChoices.choice;
+        }
+
+        scope pixels = new PixelRGBA[WORLD_WIDTH * WORLD_HEIGHT];
+        immutable existsPixel = PixelRGBA(255, 0, 0, 255);
+        immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
+
+        float actualFPS = info.actualFPS;
+        info.run({
+            // show FPS.
+            if (actualFPS != info.actualFPS)
             {
-                writefln("%s,%s", sdlSupport, glSupport);
+                writefln("FPS: %s", actualFPS);
+                actualFPS = info.actualFPS;
+            }
 
-                glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-                glEnable(GL_DEPTH_TEST);
+            world.nextGeneration();
+            foreach (size_t x, size_t y, ref const(World.Life) life; world)
+            {
+                pixels[y * WORLD_WIDTH + x]
+                    = (world[x, y] == World.Life.exist)
+                    ? existsPixel : emptyPixel;
+            }
 
-                auto vertexShader = createVertexShader(import("earth.vert"));
-                auto fragmentShader = createFragmentShader(import("earth.frag"));
-                auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
-                auto vao = createPlane!Vertex(
-                        2, 2,
-                        (ShapeVertex v) => Vertex(
-                            [v.x - 0.5, v.y - 0.5, v.z],
-                            [cast(ubyte)(v.h * ubyte.max / 2), cast(ubyte)(v.v * ubyte.max / 2)]));
+            texture.image2D(WORLD_WIDTH, WORLD_HEIGHT, pixels[]);
+            texture.activeAndBind(0);
 
-                auto texture = createTexture(
-                        TextureType.texture2D,
-                        TextureMinFilter.linear,
-                        TextureMagFilter.linear,
-                        TextureWrap.repeat,
-                        TextureWrap.repeat);
-
-                immutable PixelRGBA[4] pixels = [
-                    PixelRGBA(255,   0,   0, 255),
-                    PixelRGBA(  0, 255,   0, 255),
-                    PixelRGBA(  0,   0, 255, 255),
-                    PixelRGBA(  0,   0,   0, 255),
-                ];
-                texture.image2D(2, 2, pixels[]);
-                texture.activeAndBind(0);
-
-                scope mainLoop = new MainLoop();
-                mainLoop.onDraw({
-                    draw(
-                        shaderProgram,
-                        vao,
-                        texture,
-                        WINDOW_WIDTH,
-                        WINDOW_HEIGHT);
-                }).run(window);
-            });
+            draw(
+                shaderProgram,
+                vao,
+                texture,
+                WINDOW_WIDTH,
+                WINDOW_HEIGHT);
         });
     });
 }
