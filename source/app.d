@@ -24,7 +24,7 @@ import dearth :
     Mat4,
     PixelRGBA,
     ShaderProgram,
-    ShapeVertex,
+    PlaneVertex,
     Texture,
     TextureType,
     TextureMinFilter,
@@ -62,7 +62,7 @@ void main()
         auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
         auto vao = createPlane!Vertex(
             2, 2,
-            (ShapeVertex v) => Vertex(
+            (PlaneVertex v) => Vertex(
                 [v.x - 0.5, v.y - 0.5, v.z],
                 [
                     cast(ubyte)(v.h * ubyte.max / 2),

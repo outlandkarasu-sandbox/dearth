@@ -11,7 +11,17 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
-import dearth.shapes.types : ShapeVertex;
+/**
+Plane vertex parameter.
+*/
+struct PlaneVertex
+{
+    float x;
+    float y;
+    float z;
+    size_t h;
+    size_t v;
+}
 
 ///
 private struct PlaneTriangleIndices
@@ -195,10 +205,10 @@ in (splitV > 0)
 
     scope vertices = iota(splitV + 1)
         .map!(v => iota(splitH + 1)
-            .map!(h => dg(ShapeVertex(
+            .map!(h => dg(PlaneVertex(
                 h == splitH ? 1.0 : (1.0 * h / splitH),
                 v == splitV ? 1.0 : (1.0 * v / splitV),
-                0,
+                0.0,
                 h, v)))
         )
         .joiner
