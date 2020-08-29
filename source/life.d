@@ -68,6 +68,32 @@ class World
     }
 
     /**
+    foreach over world.
+
+    Params:
+        Dg = delegate type
+        dg = foreach delegate.
+    Returns:
+        foreach result.
+    */
+    int opApply(Dg)(scope Dg dg) @trusted
+    {
+        foreach (y; 0 .. height_)
+        {
+            immutable rowIndex = y * width_;
+            foreach (x; 0 .. width_)
+            {
+                immutable result = dg(x, y, currentPlane_[rowIndex + x]);
+                if (result)
+                {
+                    return result;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
     Move to next generation state.
     */
     void nextGeneration() @nogc nothrow pure scope

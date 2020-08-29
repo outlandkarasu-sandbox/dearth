@@ -88,12 +88,9 @@ void main()
                 // initialize world.
                 scope world = new World(WORLD_WIDTH, WORLD_HEIGHT);
                 scope lifeChoices = [World.Life.empty, World.Life.exist];
-                foreach (y; 0 .. WORLD_HEIGHT)
+                foreach (size_t x, size_t y, ref World.Life life; world)
                 {
-                    foreach (x; 0 .. WORLD_WIDTH)
-                    {
-                        world[x, y] = lifeChoices.choice();
-                    }
+                    life = lifeChoices.choice;
                 }
 
                 PixelRGBA[WORLD_WIDTH * WORLD_HEIGHT] pixels;
@@ -103,14 +100,11 @@ void main()
                 scope mainLoop = new MainLoop();
                 mainLoop.onDraw({
                     world.nextGeneration();
-                    foreach (y; 0 .. WORLD_HEIGHT)
+                    foreach (size_t x, size_t y, ref const(World.Life) life; world)
                     {
-                        immutable rowIndex = y * WORLD_WIDTH;
-                        foreach (x; 0 .. WORLD_WIDTH)
-                        {
-                            pixels[rowIndex + x] = (world[x, y] == World.Life.exist)
-                                ? existsPixel : emptyPixel;
-                        }
+                        pixels[y * WORLD_WIDTH + x]
+                            = (world[x, y] == World.Life.exist)
+                            ? existsPixel : emptyPixel;
                     }
 
                     texture.image2D(WORLD_WIDTH, WORLD_HEIGHT, pixels[]);
