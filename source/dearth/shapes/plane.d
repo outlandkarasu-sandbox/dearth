@@ -11,6 +11,8 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
+import dearth.shapes.utils : PlaneTriangleIndices;
+
 /**
 Plane vertex parameter.
 */
@@ -23,76 +25,42 @@ struct PlaneVertex
     size_t v;
 }
 
-///
-private struct PlaneTriangleIndices
+/**
+Params:
+    T = vertex type.
+    Dg = vertex generator delegate.
+    splitH = horizontal polygon split count.
+    splitV = vertical polygon split count.
+Returns:
+    Plane shape object.
+*/
+VertexArrayObject!T createPlane(T, Dg)(size_t splitH, size_t splitV, scope Dg dg)
+in (splitH > 0)
+in (splitV > 0)
 {
-@nogc nothrow pure @safe:
+    static assert(isVertexStruct!T);
 
-    this(size_t offsetTop, size_t offsetBottom) scope
-    {
-        this.indices_ = [
-            offsetTop + 0, offsetTop + 1, offsetBottom + 1,
-            offsetBottom + 1, offsetBottom + 0, offsetTop + 0];
-    }
+    scope vertices = iota(splitV + 1)
+        .map!(v => iota(splitH + 1)
+            .map!(h => dg(PlaneVertex(
+                h == splitH ? 1.0 : (1.0 * h / splitH),
+                v == splitV ? 1.0 : (1.0 * v / splitV),
+                0.0,
+                h, v)))
+        )
+        .joiner
+        .array;
+    scope indices = PlaneIndices(splitH, splitV).map!(i => cast(ushort) i).array;
 
-    size_t front() const scope
-    {
-        return indices_[i_];
-    }
-
-    void popFront() scope
-    {
-        ++i_;
-    }
-
-    bool empty() const scope
-    {
-        return i_ >= indices_.length;
-    }
+    auto vao = createVAO!T();
+    vao.loadVertices(vertices);
+    vao.loadIndices(indices);
+    return vao;
+}
 
 private:
-    size_t[6] indices_;
-    size_t i_;
-}
 
-///
-@nogc nothrow pure @safe unittest
-{
-    import std.algorithm : equal;
-
-    auto indices = PlaneTriangleIndices(0, 2);
-    assert(indices.front == 0);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 1);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 3);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 3);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 2);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 0);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.empty);
-
-    auto indices11 = PlaneTriangleIndices(11, 22);
-    scope size_t[6] expected11 = [11 + 0, 11 + 1, 22 + 1, 22 + 1, 22 + 0, 11 + 0];
-    assert(indices11.equal(expected11[]));
-}
-
-private struct PlaneIndices
+struct PlaneIndices
 {
 @nogc nothrow pure @safe:
 
@@ -186,38 +154,5 @@ private:
         4, 5, 8, 8, 7, 4,
     ];
     assert(indices22.equal(expected22[]));
-}
-
-/**
-Params:
-    T = vertex type.
-    Dg = vertex generator delegate.
-    splitH = horizontal polygon split count.
-    splitV = vertical polygon split count.
-Returns:
-    Plane shape object.
-*/
-VertexArrayObject!T createPlane(T, Dg)(size_t splitH, size_t splitV, scope Dg dg)
-in (splitH > 0)
-in (splitV > 0)
-{
-    static assert(isVertexStruct!T);
-
-    scope vertices = iota(splitV + 1)
-        .map!(v => iota(splitH + 1)
-            .map!(h => dg(PlaneVertex(
-                h == splitH ? 1.0 : (1.0 * h / splitH),
-                v == splitV ? 1.0 : (1.0 * v / splitV),
-                0.0,
-                h, v)))
-        )
-        .joiner
-        .array;
-    scope indices = PlaneIndices(splitH, splitV).map!(i => cast(ushort) i).array;
-
-    auto vao = createVAO!T();
-    vao.loadVertices(vertices);
-    vao.loadIndices(indices);
-    return vao;
 }
 
