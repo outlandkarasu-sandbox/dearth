@@ -181,14 +181,14 @@ private:
     assert(range.empty);
 }
 
-struct SkipHRange(R)
+struct SkipRange(R, alias P)
 {
     @disable this();
 
-    this()(return auto scope ref R range, size_t skipH) @nogc nothrow pure @safe scope
+    this()(return auto scope ref R range, size_t skipTarget) @nogc nothrow pure @safe scope
     {
         this.range_ = range;
-        this.skipH_ = skipH;
+        this.skipTarget_ = skipTarget;
         skip();
     }
 
@@ -215,11 +215,11 @@ struct SkipHRange(R)
 
 private:
     R range_;
-    size_t skipH_;
+    size_t skipTarget_;
 
     void skip() @nogc nothrow pure @safe scope
     {
-        while (!range_.empty && range_.front.h == skipH_)
+        while (!range_.empty && P(range_.front, skipTarget_))
         {
             range_.popFront();
         }
@@ -228,7 +228,7 @@ private:
 
 auto skipH(R)(return auto scope ref R r, size_t skipH)
 {
-    return SkipHRange!R(r, skipH);
+    return SkipRange!(R, (v, target) => v.h == target)(r, skipH);
 }
 
 ///
@@ -291,6 +291,50 @@ auto skipH(R)(return auto scope ref R r, size_t skipH)
 
     range.popFront();
     assertVertex(range, 0.5f, 1.0f, 1, 4);
+
+    range.popFront();
+    assert(range.empty);
+}
+
+auto skipV(R)(return auto scope ref R r, size_t skipV)
+{
+    return SkipRange!(R, (v, target) => v.v == target)(r, skipV);
+}
+
+///
+@safe unittest
+{
+    auto range = SinglePlaneVerticesRange(1, 1).skipV(0);
+    assertVertex(range, 0.0f, 1.0f, 0, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 1, 1);
+    range.popFront();
+    assert(range.empty);
+}
+
+///
+@safe unittest
+{
+    auto range = SinglePlaneVerticesRange(2, 4).skipV(0).skipV(4);
+    assertVertex(range, 0.0f, 0.25f, 0, 1);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.25f, 1, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.25f, 2, 1);
+
+    range.popFront();
+    assertVertex(range, 0.0f, 0.5f, 0, 2);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.5f, 1, 2);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.5f, 2, 2);
+
+    range.popFront();
+    assertVertex(range, 0.0f, 0.75f, 0, 3);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.75f, 1, 3);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.75f, 2, 3);
 
     range.popFront();
     assert(range.empty);
