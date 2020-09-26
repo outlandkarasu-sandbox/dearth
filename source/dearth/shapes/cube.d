@@ -127,6 +127,21 @@ private:
 ///
 @safe unittest
 {
+    auto range = SinglePlaneVerticesRange(1, 1);
+    assertVertex(range, 0.0f, 0.0f, 0, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 1, 0);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 0, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 1, 1);
+    range.popFront();
+    assert(range.empty);
+}
+
+///
+@safe unittest
+{
     auto range = SinglePlaneVerticesRange(2, 4);
     assertVertex(range, 0.0f, 0.0f, 0, 0);
     range.popFront();
