@@ -3,8 +3,8 @@ Cube shape.
 */
 module dearth.shapes.cube;
 
-import std.algorithm : joiner, map;
-import std.range : array, iota;
+import std.algorithm : map;
+import std.range : chain;
 
 import dearth.opengl :
     createVAO,
@@ -64,6 +64,23 @@ struct PlaneVertex
     size_t v;
 }
 
+version(unittest)
+{
+    void assertVertex(
+        scope ref const(SinglePlaneVerticesRange) r,
+        float x, float y, size_t h, size_t v)
+        @nogc nothrow pure @safe
+    {
+        import std.math : isClose;
+
+        assert(!r.empty);
+        assert(r.front.x.isClose(x));
+        assert(r.front.y.isClose(y));
+        assert(r.front.h == h);
+        assert(r.front.v == v);
+    }
+}
+
 /**
 Single plane vertices range.
 */
@@ -110,20 +127,6 @@ private:
 ///
 @safe unittest
 {
-    import std.math : isClose;
-    import std.conv : to;
-
-    void assertVertex(
-        scope ref const(SinglePlaneVerticesRange) r,
-        float x, float y, size_t h, size_t v)
-    {
-        assert(!r.empty);
-        assert(r.front.x.isClose(x));
-        assert(r.front.y.isClose(y));
-        assert(r.front.h == h);
-        assert(r.front.v == v);
-    }
-
     auto range = SinglePlaneVerticesRange(2, 4);
     assertVertex(range, 0.0f, 0.0f, 0, 0);
     range.popFront();
@@ -163,9 +166,20 @@ private:
     assert(range.empty);
 }
 
-auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) @nogc nothrow pure @safe
+auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pure @safe
 {
-    auto range = SinglePlaneVerticesRange(splitH, splitV);
-    return range;
+    auto frontPlane = SinglePlaneVerticesRange(splitH, splitV)
+        .map!((v) => CubeVertex(v.x, v.y, 0.0f, v.h, v.v, 0));
+    auto rightPlane = SinglePlaneVerticesRange(splitD, splitV)
+        .map!((v) => CubeVertex(1.0f, v.y, v.x, splitH, v.v, v.h));
+    auto leftPlane = SinglePlaneVerticesRange(splitD, splitV)
+        .map!((v) => CubeVertex(0.0f, v.y, v.x, 0, v.v, v.h));
+    auto backPlane = SinglePlaneVerticesRange(splitH, splitV)
+        .map!((v) => CubeVertex(v.x, v.y, 1.0f, v.h, v.v, splitD));
+    auto topPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .map!((v) => CubeVertex(v.x, 1.0f, v.y, v.h, splitV, v.v));
+    auto bottomPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .map!((v) => CubeVertex(v.x, 0.0f, v.y, v.h, 0, v.v));
+    return chain(frontPlane, rightPlane, leftPlane, backPlane, topPlane, bottomPlane);
 }
 
