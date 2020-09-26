@@ -109,8 +109,8 @@ struct SinglePlaneVerticesRange
         in (!empty)
         {
             return PlaneVertex(
-                cast(float)((currentH_ * width_) / splitH_),
-                cast(float)((currentV_ * height_) / splitV_),
+                cast(float)((cast(real) currentH_) / splitH_),
+                cast(float)((cast(real) currentV_) / splitV_),
                 currentH_,
                 currentV_);
         }
@@ -137,8 +137,6 @@ private:
     size_t splitV_;
     size_t currentH_;
     size_t currentV_;
-    real width_ = 1.0;
-    real height_ = 1.0;
 }
 
 ///
