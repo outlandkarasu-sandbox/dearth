@@ -25,9 +25,38 @@ struct CubeVertex
 }
 
 /**
+Params:
+    T = vertex type.
+    Dg = vertex generator delegate type.
+    splitH = horizontal polygon split count.
+    splitV = vertical polygon split count.
+    splitD = depth polygon split count.
+    dg = vertex generator delegate.
+Returns:
+    Cube shape object.
+*/
+VertexArrayObject!T createCube(T, Dg)(size_t splitH, size_t splitV, size_t splitD, scope Dg dg)
+in (splitH > 0)
+in (splitV > 0)
+in (splitD > 0)
+{
+    static assert(isVertexStruct!T);
+
+    scope immutable(T)[] vertices = [];
+    scope immutable(ushort)[] vertices = [];
+
+    auto vao = createVAO!T();
+    vao.loadVertices(vertices);
+    vao.loadIndices(indices);
+    return vao;
+}
+
+private:
+
+/**
 Single plane vertices range.
 */
-private struct SinglePlaneVerticesRange
+struct SinglePlaneVerticesRange
 {
     @property const @nogc nothrow pure @safe scope
     {
@@ -125,35 +154,5 @@ private:
 
     range.popFront();
     assert(range.empty);
-}
-
-/**
-Params:
-    T = vertex type.
-    Dg = vertex generator delegate type.
-    splitH = horizontal polygon split count.
-    splitV = vertical polygon split count.
-    splitD = depth polygon split count.
-    dg = vertex generator delegate.
-Returns:
-    Cube shape object.
-*/
-VertexArrayObject!T createCube(T, Dg)(
-    size_t splitH,
-    size_t splitV,
-    size_t splitD,
-    scope Dg dg)
-in (splitH > 0)
-in (splitV > 0)
-{
-    static assert(isVertexStruct!T);
-
-    scope immutable(T)[] vertices = [];
-    scope immutable(ushort)[] vertices = [];
-
-    auto vao = createVAO!T();
-    vao.loadVertices(vertices);
-    vao.loadIndices(indices);
-    return vao;
 }
 
