@@ -67,7 +67,7 @@ struct PlaneVertex
 version(unittest)
 {
     void assertVertex(R)(
-        scope ref const(R) r,
+        scope ref R r,
         float x, float y, size_t h, size_t v)
         @nogc nothrow pure @safe
     {
@@ -78,6 +78,23 @@ version(unittest)
         assert(r.front.y.isClose(y));
         assert(r.front.h == h);
         assert(r.front.v == v);
+    }
+
+    void assertVertex(R)(
+        scope ref R r,
+        float x, float y, float z,
+        size_t h, size_t v, size_t d)
+        @nogc nothrow pure @safe
+    {
+        import std.math : isClose;
+
+        assert(!r.empty);
+        assert(r.front.x.isClose(x));
+        assert(r.front.y.isClose(y));
+        assert(r.front.z.isClose(z));
+        assert(r.front.h == h);
+        assert(r.front.v == v);
+        assert(r.front.d == d);
     }
 }
 
@@ -344,16 +361,123 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
 {
     auto frontPlane = SinglePlaneVerticesRange(splitH, splitV)
         .map!((v) => CubeVertex(v.x, v.y, 0.0f, v.h, v.v, 0));
-    auto rightPlane = SinglePlaneVerticesRange(splitD, splitV)
-        .map!((v) => CubeVertex(1.0f, v.y, v.x, splitH, v.v, v.h));
     auto leftPlane = SinglePlaneVerticesRange(splitD, splitV)
+        .skipH(0)
         .map!((v) => CubeVertex(0.0f, v.y, v.x, 0, v.v, v.h));
+    auto rightPlane = SinglePlaneVerticesRange(splitD, splitV)
+        .skipH(0)
+        .map!((v) => CubeVertex(1.0f, v.y, v.x, splitH, v.v, v.h));
     auto backPlane = SinglePlaneVerticesRange(splitH, splitV)
+        .skipH(0).skipH(splitH)
         .map!((v) => CubeVertex(v.x, v.y, 1.0f, v.h, v.v, splitD));
-    auto topPlane = SinglePlaneVerticesRange(splitH, splitD)
-        .map!((v) => CubeVertex(v.x, 1.0f, v.y, v.h, splitV, v.v));
     auto bottomPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .skipH(0).skipH(splitH).skipV(0).skipV(splitV)
         .map!((v) => CubeVertex(v.x, 0.0f, v.y, v.h, 0, v.v));
-    return chain(frontPlane, rightPlane, leftPlane, backPlane, topPlane, bottomPlane);
+    auto topPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .skipH(0).skipH(splitH).skipV(0).skipV(splitV)
+        .map!((v) => CubeVertex(v.x, 1.0f, v.y, v.h, splitV, v.v));
+    return chain(frontPlane, leftPlane, rightPlane, backPlane, bottomPlane, topPlane);
+}
+
+///
+@safe unittest
+{
+    auto range = createVerticesRange(1, 1, 1);
+
+    // front
+    assertVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 0.0f, 1, 0, 0);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 0.0f, 0, 1, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 0.0f, 1, 1, 0);
+
+    // left
+    range.popFront();
+    assertVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 1);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 1.0f, 0, 1, 1);
+
+    // right
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 1.0f, 1, 0, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 1.0f, 1, 1, 1);
+
+    range.popFront();
+    assert(range.empty);
+}
+
+///
+@safe unittest
+{
+    auto range = createVerticesRange(2, 2, 2);
+
+    // front
+    assertVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.0f, 0.0f, 1, 0, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 0.0f, 2, 0, 0);
+    range.popFront();
+    assertVertex(range, 0.0f, 0.5f, 0.0f, 0, 1, 0);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.5f, 0.0f, 1, 1, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.5f, 0.0f, 2, 1, 0);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 0.0f, 0, 2, 0);
+    range.popFront();
+    assertVertex(range, 0.5f, 1.0f, 0.0f, 1, 2, 0);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 0.0f, 2, 2, 0);
+
+    // left
+    range.popFront();
+    assertVertex(range, 0.0f, 0.0f, 0.5f, 0, 0, 1);
+    range.popFront();
+    assertVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 2);
+    range.popFront();
+    assertVertex(range, 0.0f, 0.5f, 0.5f, 0, 1, 1);
+    range.popFront();
+    assertVertex(range, 0.0f, 0.5f, 1.0f, 0, 1, 2);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 0.5f, 0, 2, 1);
+    range.popFront();
+    assertVertex(range, 0.0f, 1.0f, 1.0f, 0, 2, 2);
+
+    // right
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 0.5f, 2, 0, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.0f, 1.0f, 2, 0, 2);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.5f, 0.5f, 2, 1, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 0.5f, 1.0f, 2, 1, 2);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 0.5f, 2, 2, 1);
+    range.popFront();
+    assertVertex(range, 1.0f, 1.0f, 1.0f, 2, 2, 2);
+
+    // back
+    range.popFront();
+    assertVertex(range, 0.5f, 0.0f, 1.0f, 1, 0, 2);
+    range.popFront();
+    assertVertex(range, 0.5f, 0.5f, 1.0f, 1, 1, 2);
+    range.popFront();
+    assertVertex(range, 0.5f, 1.0f, 1.0f, 1, 2, 2);
+
+    // bottom
+    range.popFront();
+    assertVertex(range, 0.5f, 0.0f, 0.5f, 1, 0, 1);
+
+    // top
+    range.popFront();
+    assertVertex(range, 0.5f, 1.0f, 0.5f, 1, 2, 1);
+
+    range.popFront();
+    assert(range.empty);
 }
 
