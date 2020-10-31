@@ -15,7 +15,7 @@ import bindbc.opengl :
 
 import dearth :
     createFragmentShader,
-    createPlane,
+    createCube,
     createProgram,
     createTexture,
     createVAO,
@@ -24,7 +24,7 @@ import dearth :
     Mat4,
     PixelRGBA,
     ShaderProgram,
-    PlaneVertex,
+    CubeVertex,
     Texture,
     TextureType,
     TextureMinFilter,
@@ -60,9 +60,9 @@ void main()
         auto vertexShader = createVertexShader(import("earth.vert"));
         auto fragmentShader = createFragmentShader(import("earth.frag"));
         auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
-        auto vao = createPlane!Vertex(
-            2, 2,
-            (PlaneVertex v) => Vertex(
+        auto vao = createCube!Vertex(
+            2, 2, 2,
+            (CubeVertex v) => Vertex(
                 [v.x - 0.5, v.y - 0.5, v.z],
                 [
                     cast(ubyte)(v.h * ubyte.max / 2),

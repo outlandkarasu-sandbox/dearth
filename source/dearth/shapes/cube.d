@@ -4,6 +4,7 @@ Cube shape.
 module dearth.shapes.cube;
 
 import std.algorithm : map;
+import std.array : array;
 import std.range : chain;
 
 import dearth.opengl :
@@ -11,7 +12,7 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
-import dearth.shapes.utils : PlaneVertices;
+import dearth.shapes.utils : PlaneVertices, PlaneIndices;
 
 version(unittest)
 {
@@ -66,8 +67,10 @@ in (splitD > 0)
 {
     static assert(isVertexStruct!T);
 
-    scope immutable(T)[] vertices = [];
-    scope immutable(ushort)[] vertices = [];
+    scope vertices = createVerticesRange(
+        splitH, splitV, splitD).map!dg.array;
+    scope indices = PlaneIndices(splitH, splitV)
+        .map!(i => cast(ushort) i).array;
 
     auto vao = createVAO!T();
     vao.loadVertices(vertices);
