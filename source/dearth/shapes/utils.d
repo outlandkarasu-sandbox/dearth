@@ -75,6 +75,16 @@ private:
 }
 
 /**
+Plane index and division info.
+*/
+struct PlaneIndex
+{
+    size_t i;
+    size_t h;
+    size_t v;
+}
+
+/**
 Plane indices range.
 */
 struct PlaneIndices
@@ -90,9 +100,9 @@ struct PlaneIndices
         this.current_ = PlaneTriangleIndices(0, indicesH);
     }
 
-    size_t front() const scope
+    PlaneIndex front() const scope
     {
-        return current_.front;
+        return PlaneIndex(current_.front, currentH_, currentV_);
     }
 
     void popFront() scope
@@ -145,23 +155,23 @@ private:
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.algorithm : equal;
+    import std.algorithm : equal, map;
 
     auto indices11 = PlaneIndices(1, 1);
     immutable size_t[6] expected11 = [0, 1, 3, 3, 2, 0];
-    assert(indices11.equal(expected11[]));
+    assert(indices11.map!"a.i".equal(expected11[]));
 
     auto indices21 = PlaneIndices(2, 1);
     immutable size_t[12] expected21 = [
         0, 1, 4, 4, 3, 0,
         1, 2, 5, 5, 4, 1];
-    assert(indices21.equal(expected21[]));
+    assert(indices21.map!"a.i".equal(expected21[]));
 
     auto indices12 = PlaneIndices(1, 2);
     immutable size_t[12] expected12 = [
         0, 1, 3, 3, 2, 0,
         2, 3, 5, 5, 4, 2];
-    assert(indices12.equal(expected12[]));
+    assert(indices12.map!"a.i".equal(expected12[]));
 
     auto indices22 = PlaneIndices(2, 2);
     immutable size_t[24] expected22 = [
@@ -170,7 +180,7 @@ private:
         3, 4, 7, 7, 6, 3,
         4, 5, 8, 8, 7, 4,
     ];
-    assert(indices22.equal(expected22[]));
+    assert(indices22.map!"a.i".equal(expected22[]));
 }
 
 /**

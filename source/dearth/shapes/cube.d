@@ -12,7 +12,10 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
-import dearth.shapes.utils : PlaneVertices, PlaneIndices;
+import dearth.shapes.utils :
+    PlaneVertices,
+    PlaneIndices,
+    planeIndicesCount;
 
 version(unittest)
 {
@@ -358,5 +361,38 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
 
     range.popFront();
     assert(range.empty);
+}
+
+auto createIndicesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pure @safe
+{
+    immutable fbOffset = planeIndicesCount(splitH, splitV);
+    immutable lrOffset = planeIndicesCount(splitD, splitV);
+    immutable tbOffset = planeIndicesCount(splitH, splitD);
+    size_t offset = 0;
+
+    immutable frontOffset = offset;
+    auto front = PlaneIndices(splitH, splitV).map!"a.i";
+    offset += fbOffset;
+
+    immutable leftOffset = offset;
+    auto left = PlaneIndices(splitD, splitV).map!((i) => i.i + offset);
+    offset += lrOffset;
+
+    immutable rightOffset = offset;
+    auto right = PlaneIndices(splitD, splitV).map!((i) => i.i + offset);
+    offset += lrOffset;
+
+    immutable backOffset = offset;
+    auto back = PlaneIndices(splitH, splitV).map!((i) => i.i + offset);
+    offset += fbOffset;
+
+    immutable bottomOffset = offset;
+    auto bottom = PlaneIndices(splitH, splitD).map!((i) => i.i + offset);
+    offset += fbOffset;
+
+    immutable topOffset = offset;
+    auto top = PlaneIndices(splitH, splitD).map!((i) => i.i + offset);
+
+    return chain(front, left, right, back, bottom, top);
 }
 
