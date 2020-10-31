@@ -173,3 +173,84 @@ private:
     assert(indices11.equal(expected11[]));
 }
 
+/**
+Plane vertex.
+*/
+struct PlaneVertex
+{
+    size_t h;
+    size_t v;
+}
+
+version(unittest)
+{
+    void assertVertex(R)(scope ref R r, size_t h, size_t v)
+        @nogc nothrow pure @safe
+    {
+        assert(!r.empty);
+        assert(r.front.h == h);
+        assert(r.front.v == v);
+    }
+
+    void assertVertex(R)(scope ref R r, size_t h, size_t v, size_t d)
+        @nogc nothrow pure @safe
+    {
+        assert(!r.empty);
+        assert(r.front.h == h);
+        assert(r.front.v == v);
+        assert(r.front.d == d);
+    }
+}
+
+/**
+Plane vertices range.
+*/
+struct PlaneVertices
+{
+    @property const @nogc nothrow pure @safe scope
+    {
+        PlaneVertex front()
+        in (!empty)
+        {
+            return PlaneVertex(currentH_, currentV_);
+        }
+
+        bool empty()
+        {
+            return currentV_ > splitV_;
+        }
+    }
+
+    void popFront() @nogc nothrow pure @safe scope
+    in (!empty)
+    {
+        ++currentH_;
+        if (currentH_ > splitH_)
+        {
+            ++currentV_;
+            currentH_ = 0;
+        }
+    }
+
+private:
+    size_t splitH_;
+    size_t splitV_;
+    size_t currentH_;
+    size_t currentV_;
+}
+
+///
+@safe unittest
+{
+    auto range = PlaneVertices(1, 1);
+    assertVertex(range, 0, 0);
+    range.popFront();
+    assertVertex(range, 1, 0);
+    range.popFront();
+    assertVertex(range, 0, 1);
+    range.popFront();
+    assertVertex(range, 1, 1);
+    range.popFront();
+    assert(range.empty);
+}
+

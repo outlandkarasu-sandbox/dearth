@@ -11,6 +11,30 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
+import dearth.shapes.utils : PlaneVertices;
+
+version(unittest)
+{
+    import std.math : isClose;
+    import dearth.shapes.utils : assertVertex;
+
+    void assertCubeVertex(R)(
+        scope ref R r,
+        real x,
+        real y,
+        real z,
+        size_t h,
+        size_t v,
+        size_t d)
+        @nogc nothrow pure @safe
+    {
+        assertVertex(r, h, v, d);
+        assert(r.front.x.isClose(x));
+        assert(r.front.y.isClose(y));
+        assert(r.front.z.isClose(z));
+    }
+}
+
 /**
 Cube vertex parameter.
 */
@@ -53,149 +77,6 @@ in (splitD > 0)
 
 private:
 
-/**
-Plane vertex parameter.
-*/
-struct PlaneVertex
-{
-    float x;
-    float y;
-    size_t h;
-    size_t v;
-}
-
-version(unittest)
-{
-    void assertVertex(R)(
-        scope ref R r,
-        float x, float y, size_t h, size_t v)
-        @nogc nothrow pure @safe
-    {
-        import std.math : isClose;
-
-        assert(!r.empty);
-        assert(r.front.x.isClose(x));
-        assert(r.front.y.isClose(y));
-        assert(r.front.h == h);
-        assert(r.front.v == v);
-    }
-
-    void assertVertex(R)(
-        scope ref R r,
-        float x, float y, float z,
-        size_t h, size_t v, size_t d)
-        @nogc nothrow pure @safe
-    {
-        import std.math : isClose;
-
-        assert(!r.empty);
-        assert(r.front.x.isClose(x));
-        assert(r.front.y.isClose(y));
-        assert(r.front.z.isClose(z));
-        assert(r.front.h == h);
-        assert(r.front.v == v);
-        assert(r.front.d == d);
-    }
-}
-
-/**
-Single plane vertices range.
-*/
-struct SinglePlaneVerticesRange
-{
-    @property const @nogc nothrow pure @safe scope
-    {
-        PlaneVertex front()
-        in (!empty)
-        {
-            return PlaneVertex(
-                cast(float)((cast(real) currentH_) / splitH_),
-                cast(float)((cast(real) currentV_) / splitV_),
-                currentH_,
-                currentV_);
-        }
-
-        bool empty()
-        {
-            return currentV_ > splitV_;
-        }
-    }
-
-    void popFront() @nogc nothrow pure @safe scope
-    in (!empty)
-    {
-        ++currentH_;
-        if (currentH_ > splitH_)
-        {
-            ++currentV_;
-            currentH_ = 0;
-        }
-    }
-
-private:
-    size_t splitH_;
-    size_t splitV_;
-    size_t currentH_;
-    size_t currentV_;
-}
-
-///
-@safe unittest
-{
-    auto range = SinglePlaneVerticesRange(1, 1);
-    assertVertex(range, 0.0f, 0.0f, 0, 0);
-    range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 1, 0);
-    range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0, 1);
-    range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 1, 1);
-    range.popFront();
-    assert(range.empty);
-}
-
-///
-@safe unittest
-{
-    auto range = SinglePlaneVerticesRange(2, 4);
-    assertVertex(range, 0.0f, 0.0f, 0, 0);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.0f, 1, 0);
-    range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 2, 0);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.25f, 0, 1);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.25f, 1, 1);
-    range.popFront();
-    assertVertex(range, 1.0f, 0.25f, 2, 1);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 0, 2);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 1, 2);
-    range.popFront();
-    assertVertex(range, 1.0f, 0.5f, 2, 2);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.75f, 0, 3);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.75f, 1, 3);
-    range.popFront();
-    assertVertex(range, 1.0f, 0.75f, 2, 3);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0, 4);
-    range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 1, 4);
-    range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 2, 4);
-
-    range.popFront();
-    assert(range.empty);
-}
-
 struct SkipRange(R, alias P)
 {
     @disable this();
@@ -209,7 +90,7 @@ struct SkipRange(R, alias P)
 
     @property const @nogc nothrow pure @safe scope
     {
-        PlaneVertex front()
+        auto front()
         in (!empty)
         {
             return range_.front;
@@ -249,42 +130,10 @@ auto skipH(R)(return auto scope ref R r, size_t skipH)
 ///
 @safe unittest
 {
-    auto range = SinglePlaneVerticesRange(1, 1).skipH(0);
-    assertVertex(range, 1.0f, 0.0f, 1, 0);
+    auto range = PlaneVertices(1, 1).skipH(0);
+    assertVertex(range, 1, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 1, 1);
-    range.popFront();
-    assert(range.empty);
-}
-
-///
-@safe unittest
-{
-    auto range = SinglePlaneVerticesRange(2, 4).skipH(2);
-    assertVertex(range, 0.0f, 0.0f, 0, 0);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.0f, 1, 0);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.25f, 0, 1);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.25f, 1, 1);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 0, 2);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 1, 2);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 0.75f, 0, 3);
-    range.popFront();
-    assertVertex(range, 0.5f, 0.75f, 1, 3);
-
-    range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0, 4);
-    range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 1, 4);
-
+    assertVertex(range, 1, 1);
     range.popFront();
     assert(range.empty);
 }
@@ -292,20 +141,52 @@ auto skipH(R)(return auto scope ref R r, size_t skipH)
 ///
 @safe unittest
 {
-    auto range = SinglePlaneVerticesRange(2, 4).skipH(0).skipH(2);
-    assertVertex(range, 0.5f, 0.0f, 1, 0);
+    auto range = PlaneVertices(2, 4).skipH(2);
+    assertVertex(range, 0, 0);
+    range.popFront();
+    assertVertex(range, 1, 0);
 
     range.popFront();
-    assertVertex(range, 0.5f, 0.25f, 1, 1);
+    assertVertex(range, 0, 1);
+    range.popFront();
+    assertVertex(range, 1, 1);
 
     range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 1, 2);
+    assertVertex(range, 0, 2);
+    range.popFront();
+    assertVertex(range, 1, 2);
 
     range.popFront();
-    assertVertex(range, 0.5f, 0.75f, 1, 3);
+    assertVertex(range, 0, 3);
+    range.popFront();
+    assertVertex(range, 1, 3);
 
     range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 1, 4);
+    assertVertex(range, 0, 4);
+    range.popFront();
+    assertVertex(range, 1, 4);
+
+    range.popFront();
+    assert(range.empty);
+}
+
+///
+@safe unittest
+{
+    auto range = PlaneVertices(2, 4).skipH(0).skipH(2);
+    assertVertex(range, 1, 0);
+
+    range.popFront();
+    assertVertex(range, 1, 1);
+
+    range.popFront();
+    assertVertex(range, 1, 2);
+
+    range.popFront();
+    assertVertex(range, 1, 3);
+
+    range.popFront();
+    assertVertex(range, 1, 4);
 
     range.popFront();
     assert(range.empty);
@@ -319,10 +200,10 @@ auto skipV(R)(return auto scope ref R r, size_t skipV)
 ///
 @safe unittest
 {
-    auto range = SinglePlaneVerticesRange(1, 1).skipV(0);
-    assertVertex(range, 0.0f, 1.0f, 0, 1);
+    auto range = PlaneVertices(1, 1).skipV(0);
+    assertVertex(range, 0, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 1, 1);
+    assertVertex(range, 1, 1);
     range.popFront();
     assert(range.empty);
 }
@@ -330,26 +211,26 @@ auto skipV(R)(return auto scope ref R r, size_t skipV)
 ///
 @safe unittest
 {
-    auto range = SinglePlaneVerticesRange(2, 4).skipV(0).skipV(4);
-    assertVertex(range, 0.0f, 0.25f, 0, 1);
+    auto range = PlaneVertices(2, 4).skipV(0).skipV(4);
+    assertVertex(range, 0, 1);
     range.popFront();
-    assertVertex(range, 0.5f, 0.25f, 1, 1);
+    assertVertex(range, 1, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 0.25f, 2, 1);
+    assertVertex(range, 2, 1);
 
     range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 0, 2);
+    assertVertex(range, 0, 2);
     range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 1, 2);
+    assertVertex(range, 1, 2);
     range.popFront();
-    assertVertex(range, 1.0f, 0.5f, 2, 2);
+    assertVertex(range, 2, 2);
 
     range.popFront();
-    assertVertex(range, 0.0f, 0.75f, 0, 3);
+    assertVertex(range, 0, 3);
     range.popFront();
-    assertVertex(range, 0.5f, 0.75f, 1, 3);
+    assertVertex(range, 1, 3);
     range.popFront();
-    assertVertex(range, 1.0f, 0.75f, 2, 3);
+    assertVertex(range, 2, 3);
 
     range.popFront();
     assert(range.empty);
@@ -357,23 +238,65 @@ auto skipV(R)(return auto scope ref R r, size_t skipV)
 
 auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pure @safe
 {
-    auto frontPlane = SinglePlaneVerticesRange(splitH, splitV)
-        .map!((v) => CubeVertex(v.x, v.y, 0.0f, v.h, v.v, 0));
-    auto leftPlane = SinglePlaneVerticesRange(splitD, splitV)
+    auto frontPlane = PlaneVertices(splitH, splitV)
+        .map!((v) => CubeVertex(
+            (cast(real) v.h) / splitH,
+            (cast(real) v.v) / splitV,
+            0.0f,
+            v.h,
+            v.v,
+            0));
+
+    auto leftPlane = PlaneVertices(splitD, splitV)
         .skipH(0)
-        .map!((v) => CubeVertex(0.0f, v.y, v.x, 0, v.v, v.h));
-    auto rightPlane = SinglePlaneVerticesRange(splitD, splitV)
+        .map!((v) => CubeVertex(
+            0.0f,
+            (cast(real) v.v) / splitV,
+            (cast(real) v.h) / splitD,
+            0,
+            v.v,
+            v.h));
+
+    auto rightPlane = PlaneVertices(splitD, splitV)
         .skipH(0)
-        .map!((v) => CubeVertex(1.0f, v.y, v.x, splitH, v.v, v.h));
-    auto backPlane = SinglePlaneVerticesRange(splitH, splitV)
+        .map!((v) => CubeVertex(
+            1.0f,
+            (cast(real) v.v) / splitV,
+            (cast(real) v.h) / splitD,
+            splitH,
+            v.v,
+            v.h));
+
+    auto backPlane = PlaneVertices(splitH, splitV)
         .skipH(0).skipH(splitH)
-        .map!((v) => CubeVertex(v.x, v.y, 1.0f, v.h, v.v, splitD));
-    auto bottomPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .map!((v) => CubeVertex(
+            (cast(real) v.h) / splitH,
+            (cast(real) v.v) / splitV,
+            1.0f,
+            v.h,
+            v.v,
+            splitD));
+
+    auto bottomPlane = PlaneVertices(splitH, splitD)
         .skipH(0).skipH(splitH).skipV(0).skipV(splitV)
-        .map!((v) => CubeVertex(v.x, 0.0f, v.y, v.h, 0, v.v));
-    auto topPlane = SinglePlaneVerticesRange(splitH, splitD)
+        .map!((v) => CubeVertex(
+            (cast(real) v.h) / splitH,
+            0.0f,
+            (cast(real) v.v) / splitD,
+            v.h,
+            0,
+            v.v));
+
+    auto topPlane = PlaneVertices(splitH, splitD)
         .skipH(0).skipH(splitH).skipV(0).skipV(splitV)
-        .map!((v) => CubeVertex(v.x, 1.0f, v.y, v.h, splitV, v.v));
+        .map!((v) => CubeVertex(
+            (cast(real) v.h) / splitH,
+            1.0f,
+            (cast(real) v.v) / splitD,
+            v.h,
+            splitV,
+            v.v));
+
     return chain(frontPlane, leftPlane, rightPlane, backPlane, bottomPlane, topPlane);
 }
 
@@ -383,25 +306,25 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
     auto range = createVerticesRange(1, 1, 1);
 
     // front
-    assertVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    assertCubeVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 0.0f, 1, 0, 0);
+    assertCubeVertex(range, 1.0f, 0.0f, 0.0f, 1, 0, 0);
     range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0.0f, 0, 1, 0);
+    assertCubeVertex(range, 0.0f, 1.0f, 0.0f, 0, 1, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 0.0f, 1, 1, 0);
+    assertCubeVertex(range, 1.0f, 1.0f, 0.0f, 1, 1, 0);
 
     // left
     range.popFront();
-    assertVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 1);
+    assertCubeVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 1);
     range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 1.0f, 0, 1, 1);
+    assertCubeVertex(range, 0.0f, 1.0f, 1.0f, 0, 1, 1);
 
     // right
     range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 1.0f, 1, 0, 1);
+    assertCubeVertex(range, 1.0f, 0.0f, 1.0f, 1, 0, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 1.0f, 1, 1, 1);
+    assertCubeVertex(range, 1.0f, 1.0f, 1.0f, 1, 1, 1);
 
     range.popFront();
     assert(range.empty);
@@ -413,67 +336,67 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
     auto range = createVerticesRange(2, 2, 2);
 
     // front
-    assertVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    assertCubeVertex(range, 0.0f, 0.0f, 0.0f, 0, 0, 0);
     range.popFront();
-    assertVertex(range, 0.5f, 0.0f, 0.0f, 1, 0, 0);
+    assertCubeVertex(range, 0.5f, 0.0f, 0.0f, 1, 0, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 0.0f, 2, 0, 0);
+    assertCubeVertex(range, 1.0f, 0.0f, 0.0f, 2, 0, 0);
     range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 0.0f, 0, 1, 0);
+    assertCubeVertex(range, 0.0f, 0.5f, 0.0f, 0, 1, 0);
     range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 0.0f, 1, 1, 0);
+    assertCubeVertex(range, 0.5f, 0.5f, 0.0f, 1, 1, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 0.5f, 0.0f, 2, 1, 0);
+    assertCubeVertex(range, 1.0f, 0.5f, 0.0f, 2, 1, 0);
     range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0.0f, 0, 2, 0);
+    assertCubeVertex(range, 0.0f, 1.0f, 0.0f, 0, 2, 0);
     range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 0.0f, 1, 2, 0);
+    assertCubeVertex(range, 0.5f, 1.0f, 0.0f, 1, 2, 0);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 0.0f, 2, 2, 0);
+    assertCubeVertex(range, 1.0f, 1.0f, 0.0f, 2, 2, 0);
 
     // left
     range.popFront();
-    assertVertex(range, 0.0f, 0.0f, 0.5f, 0, 0, 1);
+    assertCubeVertex(range, 0.0f, 0.0f, 0.5f, 0, 0, 1);
     range.popFront();
-    assertVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 2);
+    assertCubeVertex(range, 0.0f, 0.0f, 1.0f, 0, 0, 2);
     range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 0.5f, 0, 1, 1);
+    assertCubeVertex(range, 0.0f, 0.5f, 0.5f, 0, 1, 1);
     range.popFront();
-    assertVertex(range, 0.0f, 0.5f, 1.0f, 0, 1, 2);
+    assertCubeVertex(range, 0.0f, 0.5f, 1.0f, 0, 1, 2);
     range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 0.5f, 0, 2, 1);
+    assertCubeVertex(range, 0.0f, 1.0f, 0.5f, 0, 2, 1);
     range.popFront();
-    assertVertex(range, 0.0f, 1.0f, 1.0f, 0, 2, 2);
+    assertCubeVertex(range, 0.0f, 1.0f, 1.0f, 0, 2, 2);
 
     // right
     range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 0.5f, 2, 0, 1);
+    assertCubeVertex(range, 1.0f, 0.0f, 0.5f, 2, 0, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 0.0f, 1.0f, 2, 0, 2);
+    assertCubeVertex(range, 1.0f, 0.0f, 1.0f, 2, 0, 2);
     range.popFront();
-    assertVertex(range, 1.0f, 0.5f, 0.5f, 2, 1, 1);
+    assertCubeVertex(range, 1.0f, 0.5f, 0.5f, 2, 1, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 0.5f, 1.0f, 2, 1, 2);
+    assertCubeVertex(range, 1.0f, 0.5f, 1.0f, 2, 1, 2);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 0.5f, 2, 2, 1);
+    assertCubeVertex(range, 1.0f, 1.0f, 0.5f, 2, 2, 1);
     range.popFront();
-    assertVertex(range, 1.0f, 1.0f, 1.0f, 2, 2, 2);
+    assertCubeVertex(range, 1.0f, 1.0f, 1.0f, 2, 2, 2);
 
     // back
     range.popFront();
-    assertVertex(range, 0.5f, 0.0f, 1.0f, 1, 0, 2);
+    assertCubeVertex(range, 0.5f, 0.0f, 1.0f, 1, 0, 2);
     range.popFront();
-    assertVertex(range, 0.5f, 0.5f, 1.0f, 1, 1, 2);
+    assertCubeVertex(range, 0.5f, 0.5f, 1.0f, 1, 1, 2);
     range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 1.0f, 1, 2, 2);
+    assertCubeVertex(range, 0.5f, 1.0f, 1.0f, 1, 2, 2);
 
     // bottom
     range.popFront();
-    assertVertex(range, 0.5f, 0.0f, 0.5f, 1, 0, 1);
+    assertCubeVertex(range, 0.5f, 0.0f, 0.5f, 1, 0, 1);
 
     // top
     range.popFront();
-    assertVertex(range, 0.5f, 1.0f, 0.5f, 1, 2, 1);
+    assertCubeVertex(range, 0.5f, 1.0f, 0.5f, 1, 2, 1);
 
     range.popFront();
     assert(range.empty);
