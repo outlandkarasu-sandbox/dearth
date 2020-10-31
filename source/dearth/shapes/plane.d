@@ -11,9 +11,7 @@ import dearth.opengl :
     isVertexStruct,
     VertexArrayObject;
 
-import dearth.shapes.utils :
-    PlaneTriangleIndices,
-    PlaneIndices;
+import dearth.shapes.utils : PlaneIndices;
 
 /**
 Plane vertex parameter.
