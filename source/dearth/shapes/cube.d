@@ -3,7 +3,7 @@ Cube shape.
 */
 module dearth.shapes.cube;
 
-import std.algorithm : map;
+import std.algorithm : filter, map;
 import std.array : array;
 import std.range : chain;
 
@@ -80,54 +80,9 @@ in (splitD > 0)
 
 private:
 
-struct SkipRange(R, alias P)
-{
-    @disable this();
-
-    this()(return auto scope ref R range, size_t skipTarget) @nogc nothrow pure @safe scope
-    {
-        this.range_ = range;
-        this.skipTarget_ = skipTarget;
-        skip();
-    }
-
-    @property const @nogc nothrow pure @safe scope
-    {
-        auto front()
-        in (!empty)
-        {
-            return range_.front;
-        }
-
-        bool empty()
-        {
-            return range_.empty;
-        }
-    }
-
-    void popFront() @nogc nothrow pure @safe scope
-    in (!empty)
-    {
-        range_.popFront();
-        skip();
-    }
-
-private:
-    R range_;
-    size_t skipTarget_;
-
-    void skip() @nogc nothrow pure @safe scope
-    {
-        while (!range_.empty && P(range_.front, skipTarget_))
-        {
-            range_.popFront();
-        }
-    }
-}
-
 auto skipH(R)(return auto scope ref R r, size_t skipH)
 {
-    return SkipRange!(R, (v, target) => v.h == target)(r, skipH);
+    return r.filter!((v) => v.h != skipH);
 }
 
 ///
@@ -197,7 +152,7 @@ auto skipH(R)(return auto scope ref R r, size_t skipH)
 
 auto skipV(R)(return auto scope ref R r, size_t skipV)
 {
-    return SkipRange!(R, (v, target) => v.v == target)(r, skipV);
+    return r.filter!((v) => v.v != skipV);
 }
 
 ///
