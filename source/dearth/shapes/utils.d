@@ -37,6 +37,43 @@ private:
     size_t i_;
 }
 
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.algorithm : equal;
+
+    auto indices = PlaneTriangleIndices(0, 2);
+    assert(indices.front == 0);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.front == 1);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.front == 3);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.front == 3);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.front == 2);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.front == 0);
+    assert(!indices.empty);
+
+    indices.popFront();
+    assert(indices.empty);
+
+    auto indices11 = PlaneTriangleIndices(11, 22);
+    scope size_t[6] expected11 = [11 + 0, 11 + 1, 22 + 1, 22 + 1, 22 + 0, 11 + 0];
+    assert(indices11.equal(expected11[]));
+}
+
 /**
 Plane indices range.
 */
@@ -136,41 +173,36 @@ private:
     assert(indices22.equal(expected22[]));
 }
 
+/**
+Calculate triangle indices count.
+
+Params:
+    h = horizontal division.
+    v = vertical division.
+Returns:
+    indices count.
+*/
+size_t planeIndicesCount(size_t h, size_t v) @nogc nothrow pure @safe
+{
+    return h * v * 6;
+}
+
 ///
 @nogc nothrow pure @safe unittest
 {
-    import std.algorithm : equal;
+    void assertCount(size_t h, size_t v)
+    {
+        import std.algorithm : count;
+        assert(planeIndicesCount(h, v) == PlaneIndices(h, v).count);
+    }
 
-    auto indices = PlaneTriangleIndices(0, 2);
-    assert(indices.front == 0);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 1);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 3);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 3);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 2);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.front == 0);
-    assert(!indices.empty);
-
-    indices.popFront();
-    assert(indices.empty);
-
-    auto indices11 = PlaneTriangleIndices(11, 22);
-    scope size_t[6] expected11 = [11 + 0, 11 + 1, 22 + 1, 22 + 1, 22 + 0, 11 + 0];
-    assert(indices11.equal(expected11[]));
+    assertCount(1, 1);
+    assertCount(2, 1);
+    assertCount(1, 2);
+    assertCount(2, 2);
+    assertCount(10, 1);
+    assertCount(1, 10);
+    assertCount(10, 10);
 }
 
 /**
