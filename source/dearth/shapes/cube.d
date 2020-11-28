@@ -50,8 +50,7 @@ in (splitD > 0)
 
     scope vertices = createVerticesRange(
         splitH, splitV, splitD).map!dg.array;
-    scope indices = PlaneIndices(splitH, splitV)
-        .map!(i => cast(ushort) i.i).array;
+    scope indices = createIndicesRange(splitH, splitV, splitD).array;
 
     auto vao = createVAO!T();
     vao.loadVertices(vertices);
@@ -71,5 +70,10 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
             v.h,
             v.v,
             0));
+}
+
+auto createIndicesRange(size_t splitH, size_t splitV, size_t splitD) @nogc nothrow pure @safe
+{
+    return PlaneIndices(splitH, splitV).map!(i => cast(ushort) i.i);
 }
 
