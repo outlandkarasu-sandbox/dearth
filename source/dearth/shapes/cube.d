@@ -140,6 +140,27 @@ pure @safe unittest
     assertVertex(vertices[7], 0.0f, 1.0f, 1.0f, 0, 1, 1);
 }
 
+///
+pure @safe unittest
+{
+    immutable vertices = createVerticesRange(2, 2, 2).array;
+    assert(vertices.length == 24);
+
+    foreach (i; 0 .. 3)
+    {
+        immutable offset = i * 8;
+        immutable y = (i == 2) ? 1.0f : 1.0f * i / 2;
+        assertVertex(vertices[0 + offset], 0.0f, y, 0.0f, 0, i, 0);
+        assertVertex(vertices[1 + offset], 0.5f, y, 0.0f, 1, i, 0);
+        assertVertex(vertices[2 + offset], 1.0f, y, 0.0f, 2, i, 0);
+        assertVertex(vertices[3 + offset], 1.0f, y, 0.5f, 2, i, 1);
+        assertVertex(vertices[4 + offset], 1.0f, y, 1.0f, 2, i, 2);
+        assertVertex(vertices[5 + offset], 0.5f, y, 1.0f, 1, i, 2);
+        assertVertex(vertices[6 + offset], 0.0f, y, 1.0f, 0, i, 2);
+        assertVertex(vertices[7 + offset], 0.0f, y, 0.5f, 0, i, 1);
+    }
+}
+
 auto createIndicesRange(size_t splitH, size_t splitV, size_t splitD) @nogc nothrow pure @safe
 {
     return PlaneIndices(splitH * 2 + splitD * 2, splitV).map!(i => cast(ushort) i.i);
