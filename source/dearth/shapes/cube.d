@@ -13,6 +13,7 @@ import dearth.opengl :
     VertexArrayObject;
 
 import dearth.shapes.utils :
+    PlaneVertex,
     PlaneVertices,
     PlaneIndices,
     planeIndicesCount;
@@ -62,18 +63,103 @@ private:
 
 auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pure @safe
 {
-    return PlaneVertices(splitH, splitV)
+    immutable frontStart = 0;
+    immutable rightStart = frontStart + splitH;
+    immutable backStart = rightStart + splitD;
+    immutable leftStart = backStart + splitH;
+
+    bool isFront(scope ref const(PlaneVertex) v) @nogc
+    {
+        return frontStart <= v.h && v.h < rightStart;
+    }
+
+    bool isRight(scope ref const(PlaneVertex) v) @nogc
+    {
+        return rightStart <= v.h && v.h < backStart;
+    }
+
+    bool isBack(scope ref const(PlaneVertex) v) @nogc
+    {
+        return backStart <= v.h && v.h < leftStart;
+    }
+
+    size_t generateHPosition(scope ref const(PlaneVertex) v) @nogc
+    {
+        if (isFront(v)) return v.h;
+        else if (isRight(v)) return splitH;
+        else if (isBack(v)) return leftStart - v.h;
+        else return 0;
+    }
+
+    size_t generateDPosition(scope ref const(PlaneVertex) v) @nogc
+    {
+        if (isFront(v)) return 0;
+        else if (isRight(v)) return v.h - rightStart;
+        else if (isBack(v)) return splitD;
+        else return splitD - (v.h - leftStart);
+    }
+
+    float generateXPosition(scope ref const(PlaneVertex) v) @nogc
+    {
+        immutable h = generateHPosition(v);
+        return h == splitH ? 1.0f : (1.0f * h / splitH);
+    }
+
+    float generateZPosition(scope ref const(PlaneVertex) v) @nogc
+    {
+        immutable d = generateDPosition(v);
+        return d == splitD ? 1.0f : (1.0f * d / splitD);
+    }
+
+    immutable leftEnd = leftStart + splitD;
+    return PlaneVertices(splitH * 2 + splitD * 2, splitV)
+        .filter!((v) => v.h < leftEnd)
         .map!((v) => CubeVertex(
-            (v.h == splitH) ? 1.0f : (1.0f * v.h / splitH),
+            generateXPosition(v),
             (v.v == splitV) ? 1.0f : (1.0f * v.v / splitV),
-            0.0f,
-            v.h,
+            generateZPosition(v),
+            generateHPosition(v),
             v.v,
-            0));
+            generateDPosition(v)));
+}
+
+///
+pure @safe unittest
+{
+    immutable vertices = createVerticesRange(1, 1, 1).array;
+    assert(vertices.length == 8);
+
+    assertVertex(vertices[0], 0.0f, 0.0f, 0.0f, 0, 0, 0);
+    assertVertex(vertices[1], 1.0f, 0.0f, 0.0f, 1, 0, 0);
+    assertVertex(vertices[2], 1.0f, 0.0f, 1.0f, 1, 0, 1);
+    assertVertex(vertices[3], 0.0f, 0.0f, 1.0f, 0, 0, 1);
+
+    assertVertex(vertices[4], 0.0f, 1.0f, 0.0f, 0, 1, 0);
+    assertVertex(vertices[5], 1.0f, 1.0f, 0.0f, 1, 1, 0);
+    assertVertex(vertices[6], 1.0f, 1.0f, 1.0f, 1, 1, 1);
+    assertVertex(vertices[7], 0.0f, 1.0f, 1.0f, 0, 1, 1);
 }
 
 auto createIndicesRange(size_t splitH, size_t splitV, size_t splitD) @nogc nothrow pure @safe
 {
-    return PlaneIndices(splitH, splitV).map!(i => cast(ushort) i.i);
+    return PlaneIndices(splitH * 2 + splitD * 2, splitV).map!(i => cast(ushort) i.i);
+}
+
+version(unittest)
+{
+    import std.math : isClose;
+
+    void assertVertex(
+        scope ref const(CubeVertex) vertex,
+        float x, float y, float z, size_t h, size_t v, size_t d)
+    @nogc nothrow pure @safe
+    {
+        assert(vertex.x.isClose(x));
+        assert(vertex.y.isClose(y));
+        assert(vertex.z.isClose(z));
+        assert(vertex.h == h);
+        assert(vertex.v == v);
+        assert(vertex.d == d);
+    }
 }
 
