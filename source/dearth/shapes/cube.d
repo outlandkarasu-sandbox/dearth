@@ -111,8 +111,28 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
         return d == splitD ? 1.0f : (1.0f * d / splitD);
     }
 
+    auto topVertices = PlaneVertices(splitH, splitD)
+        .filter!((v) => (0 < v.h && v.h < splitH) && (0 < v.v && v.v < splitD))
+        .map!((v) => CubeVertex(
+            1.0f * v.h / splitH,
+            1.0f,
+            1.0f * v.v / splitD,
+            v.h,
+            splitV,
+            v.v));
+
+    auto bottomVertices = PlaneVertices(splitH, splitD)
+        .filter!((v) => (0 < v.h && v.h < splitH) && (0 < v.v && v.v < splitD))
+        .map!((v) => CubeVertex(
+            v.h == splitH ? 1.0f : 1.0f * v.h / splitH,
+            0.0f,
+            v.v == splitD ? 1.0f : 1.0f * v.v / splitD,
+            v.h,
+            0,
+            v.v));
+
     immutable leftEnd = leftStart + splitD;
-    return PlaneVertices(splitH * 2 + splitD * 2, splitV)
+    auto sideVertices = PlaneVertices(splitH * 2 + splitD * 2, splitV)
         .filter!((v) => v.h < leftEnd)
         .map!((v) => CubeVertex(
             generateXPosition(v),
@@ -121,6 +141,8 @@ auto createVerticesRange(size_t splitH, size_t splitV, size_t splitD) nothrow pu
             generateHPosition(v),
             v.v,
             generateDPosition(v)));
+
+    return chain(sideVertices, bottomVertices, topVertices);
 }
 
 ///
@@ -144,7 +166,7 @@ pure @safe unittest
 pure @safe unittest
 {
     immutable vertices = createVerticesRange(2, 2, 2).array;
-    assert(vertices.length == 24);
+    assert(vertices.length == 26);
 
     foreach (i; 0 .. 3)
     {
@@ -159,6 +181,9 @@ pure @safe unittest
         assertVertex(vertices[6 + offset], 0.0f, y, 1.0f, 0, i, 2);
         assertVertex(vertices[7 + offset], 0.0f, y, 0.5f, 0, i, 1);
     }
+
+    assertVertex(vertices[24], 0.5f, 0.0f, 0.5f, 1, 0, 1);
+    assertVertex(vertices[25], 0.5f, 1.0f, 0.5f, 1, 2, 1);
 }
 
 auto createIndicesRange(size_t splitH, size_t splitV, size_t splitD) @nogc nothrow pure @safe
