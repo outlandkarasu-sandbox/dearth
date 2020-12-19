@@ -116,3 +116,69 @@ private:
     ]));
 }
 
+struct PlanePointPathes
+{
+@nogc nothrow pure @safe:
+
+    this(size_t width, size_t height) scope
+    {
+        this.points_ = PlanePoints(width, height);
+    }
+
+    Point front() const scope
+    in (!empty)
+    {
+        immutable offset = points_.front;
+        immutable p = triangles_.front;
+        return Point(p.x + offset.x, p.y + offset.y);
+    }
+
+    void popFront() scope
+    in (!empty)
+    {
+        triangles_.popFront();
+        if (triangles_.empty)
+        {
+            triangles_ = PlaneTrianglePoints.init;
+            points_.popFront();
+        }
+    }
+
+    bool empty() const scope
+    {
+        return points_.empty;
+    }
+
+private:
+    PlanePoints points_;
+    PlaneTrianglePoints triangles_;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.algorithm : equal;
+
+    assert(PlanePointPathes().empty);
+    assert(PlanePointPathes(1, 1).equal([
+        Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
+    ]));
+
+    assert(PlanePointPathes(2, 1).equal([
+        Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
+        Point(1, 0), Point(2, 0), Point(1, 1), Point(2, 0), Point(2, 1), Point(1, 1),
+    ]));
+
+    assert(PlanePointPathes(1, 2).equal([
+        Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
+        Point(0, 1), Point(1, 1), Point(0, 2), Point(1, 1), Point(1, 2), Point(0, 2),
+    ]));
+
+    assert(PlanePointPathes(2, 2).equal([
+        Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
+        Point(1, 0), Point(2, 0), Point(1, 1), Point(2, 0), Point(2, 1), Point(1, 1),
+        Point(0, 1), Point(1, 1), Point(0, 2), Point(1, 1), Point(1, 2), Point(0, 2),
+        Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 1), Point(2, 2), Point(1, 2),
+    ]));
+}
+
