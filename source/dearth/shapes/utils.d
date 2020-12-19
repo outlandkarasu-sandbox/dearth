@@ -3,12 +3,7 @@ Shape utilities.
 */
 module dearth.shapes.utils;
 
-struct Point
-{
-    size_t x;
-    size_t y;
-    size_t z;
-}
+import dearth.shapes.point : Point;
 
 struct PlaneTrianglePoints
 {

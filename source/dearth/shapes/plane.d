@@ -3,27 +3,17 @@ Plane shape.
 */
 module dearth.shapes.plane;
 
-import std.algorithm : joiner, map;
-import std.range : array, iota;
+import std.algorithm : map;
+import std.array : array;
 
 import dearth.opengl :
     createVAO,
     isVertexStruct,
     VertexArrayObject;
 
-import dearth.shapes.utils : PlaneIndices;
-
-/**
-Plane vertex parameter.
-*/
-struct PlaneVertex
-{
-    float x;
-    float y;
-    float z;
-    size_t h;
-    size_t v;
-}
+import dearth.shapes.utils :
+    PlanePoints,
+    PlanePointPathes;
 
 /**
 Params:
@@ -40,18 +30,12 @@ in (splitV > 0)
 {
     static assert(isVertexStruct!T);
 
-    scope vertices = iota(splitV + 1)
-        .map!(v => iota(splitH + 1)
-            .map!(h => dg(PlaneVertex(
-                h == splitH ? 1.0 : (1.0 * h / splitH),
-                v == splitV ? 1.0 : (1.0 * v / splitV),
-                0.0,
-                h, v)))
-        )
-        .joiner
+    immutable pointsH = splitH + 1;
+    immutable pointsV = splitV + 1;
+    scope vertices = PlanePoints(pointsH, pointsV).map!dg.array;
+    scope indices = PlanePointPathes(splitH, splitV)
+        .map!(p => cast(ushort)(p.y * pointsH + p.x))
         .array;
-    scope indices = PlaneIndices(splitH, splitV).map!(i => cast(ushort) i).array;
-
     auto vao = createVAO!T();
     vao.loadVertices(vertices);
     vao.loadIndices(indices);
