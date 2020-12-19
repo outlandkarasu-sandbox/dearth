@@ -13,7 +13,7 @@ import dearth.opengl :
 
 import dearth.shapes.utils :
     PlanePoints,
-    PlanePointPathes;
+    PlanePointPaths;
 
 /**
 Params:
@@ -33,7 +33,7 @@ in (splitV > 0)
     immutable pointsH = splitH + 1;
     immutable pointsV = splitV + 1;
     scope vertices = PlanePoints(pointsH, pointsV).map!dg.array;
-    scope indices = PlanePointPathes(splitH, splitV)
+    scope indices = PlanePointPaths(splitH, splitV)
         .map!(p => cast(ushort)(p.y * pointsH + p.x))
         .array;
     auto vao = createVAO!T();

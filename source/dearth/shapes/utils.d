@@ -5,55 +5,9 @@ module dearth.shapes.utils;
 
 import dearth.shapes.point : Point;
 
-struct PlaneTrianglePoints
-{
-@nogc nothrow pure @safe:
-
-    Point front() const scope
-    in (!empty)
-    {
-        switch (current_)
-        {
-            default: case 0: return Point(0, 0);
-            case 1: return Point(1, 0);
-            case 2: return Point(0, 1);
-            case 3: return Point(1, 0);
-            case 4: return Point(1, 1);
-            case 5: return Point(0, 1);
-        }
-    }
-
-    void popFront() scope
-    in (!empty)
-    {
-        ++current_;
-    }
-
-    bool empty() const scope
-    {
-        return current_ >= LENGTH;
-    }
-
-private:
-    enum LENGTH = 6;
-    uint current_;
-}
-
-///
-@nogc nothrow pure @safe unittest
-{
-    import std.algorithm : equal;
-
-    assert(PlaneTrianglePoints().equal([
-        Point(0, 0),
-        Point(1, 0),
-        Point(0, 1),
-        Point(1, 0),
-        Point(1, 1),
-        Point(0, 1),
-    ]));
-}
-
+/**
+Plane points generator range.
+*/
 struct PlanePoints
 {
 @nogc nothrow pure @safe:
@@ -111,7 +65,10 @@ private:
     ]));
 }
 
-struct PlanePointPathes
+/**
+Plane point paths generator range.
+*/
+struct PlanePointPaths
 {
 @nogc nothrow pure @safe:
 
@@ -154,26 +111,77 @@ private:
 {
     import std.algorithm : equal;
 
-    assert(PlanePointPathes().empty);
-    assert(PlanePointPathes(1, 1).equal([
+    assert(PlanePointPaths().empty);
+    assert(PlanePointPaths(1, 1).equal([
         Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
     ]));
 
-    assert(PlanePointPathes(2, 1).equal([
+    assert(PlanePointPaths(2, 1).equal([
         Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
         Point(1, 0), Point(2, 0), Point(1, 1), Point(2, 0), Point(2, 1), Point(1, 1),
     ]));
 
-    assert(PlanePointPathes(1, 2).equal([
+    assert(PlanePointPaths(1, 2).equal([
         Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
         Point(0, 1), Point(1, 1), Point(0, 2), Point(1, 1), Point(1, 2), Point(0, 2),
     ]));
 
-    assert(PlanePointPathes(2, 2).equal([
+    assert(PlanePointPaths(2, 2).equal([
         Point(0, 0), Point(1, 0), Point(0, 1), Point(1, 0), Point(1, 1), Point(0, 1),
         Point(1, 0), Point(2, 0), Point(1, 1), Point(2, 0), Point(2, 1), Point(1, 1),
         Point(0, 1), Point(1, 1), Point(0, 2), Point(1, 1), Point(1, 2), Point(0, 2),
         Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 1), Point(2, 2), Point(1, 2),
+    ]));
+}
+
+private:
+
+struct PlaneTrianglePoints
+{
+@nogc nothrow pure @safe:
+
+    Point front() const scope
+    in (!empty)
+    {
+        switch (current_)
+        {
+            default: case 0: return Point(0, 0);
+            case 1: return Point(1, 0);
+            case 2: return Point(0, 1);
+            case 3: return Point(1, 0);
+            case 4: return Point(1, 1);
+            case 5: return Point(0, 1);
+        }
+    }
+
+    void popFront() scope
+    in (!empty)
+    {
+        ++current_;
+    }
+
+    bool empty() const scope
+    {
+        return current_ >= LENGTH;
+    }
+
+private:
+    enum LENGTH = 6;
+    uint current_;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.algorithm : equal;
+
+    assert(PlaneTrianglePoints().equal([
+        Point(0, 0),
+        Point(1, 0),
+        Point(0, 1),
+        Point(1, 0),
+        Point(1, 1),
+        Point(0, 1),
     ]));
 }
 
