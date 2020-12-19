@@ -55,6 +55,7 @@ struct CubeSidePoints
     }
 
     @property Point front() const scope
+    in (!empty)
     {
         immutable p = points_.front;
 
@@ -80,6 +81,7 @@ struct CubeSidePoints
     }
 
     void popFront() scope
+    in (!empty)
     {
         points_.popFront();
     }
@@ -102,6 +104,7 @@ private:
 @nogc nothrow pure @safe unittest
 {
     import std.algorithm : equal;
+
     assert(CubeSidePoints(1, 1, 1).equal([
         Point(0, 0, 0), Point(1, 0, 0), Point(1, 0, 1), Point(0, 0, 1),
         Point(0, 1, 0), Point(1, 1, 0), Point(1, 1, 1), Point(0, 1, 1),
@@ -138,6 +141,87 @@ private:
         Point(2, 2, 0), Point(2, 2, 1),
         Point(2, 2, 2), Point(1, 2, 2),
         Point(0, 2, 2), Point(0, 2, 1),
+    ]));
+}
+
+struct CubeSideIndices
+{
+@nogc nothrow pure @safe:
+
+    this(size_t splitH, size_t splitV, size_t splitD) scope
+    {
+        this.sidePlaneWidth_ = splitH * 2 + splitD * 2;
+        this.paths_ = PlanePointPaths(sidePlaneWidth_, splitV);
+    }
+
+    @property ushort front() const scope
+    in (!empty)
+    {
+        immutable p = paths_.front;
+        if (p.x == sidePlaneWidth_)
+        {
+            return cast(ushort)(p.y * sidePlaneWidth_);
+        }
+
+        return cast(ushort)(p.y * sidePlaneWidth_ + p.x);
+    }
+
+    @property bool empty() const scope
+    {
+        return paths_.empty;
+    }
+
+    void popFront() scope
+    in (!empty)
+    {
+        paths_.popFront();
+    }
+
+private:
+    size_t sidePlaneWidth_;
+    PlanePointPaths paths_;
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.algorithm : equal;
+
+    assert(CubeSideIndices(1, 1, 1).equal([
+       0, 1, 4, 1, 5, 4,
+       1, 2, 5, 2, 6, 5,
+       2, 3, 6, 3, 7, 6,
+       3, 0, 7, 0, 4, 7,
+    ]));
+
+    assert(CubeSideIndices(2, 1, 1).equal([
+       0, 1,  6, 1,  7,  6,
+       1, 2,  7, 2,  8,  7,
+       2, 3,  8, 3,  9,  8,
+       3, 4,  9, 4, 10,  9,
+       4, 5, 10, 5, 11, 10,
+       5, 0, 11, 0,  6, 11,
+    ]));
+
+    assert(CubeSideIndices(1, 1, 2).equal([
+       0, 1,  6, 1,  7,  6,
+       1, 2,  7, 2,  8,  7,
+       2, 3,  8, 3,  9,  8,
+       3, 4,  9, 4, 10,  9,
+       4, 5, 10, 5, 11, 10,
+       5, 0, 11, 0,  6, 11,
+    ]));
+
+    assert(CubeSideIndices(1, 2, 1).equal([
+       0, 1, 4, 1, 5, 4,
+       1, 2, 5, 2, 6, 5,
+       2, 3, 6, 3, 7, 6,
+       3, 0, 7, 0, 4, 7,
+
+       4, 5,  8, 5,  9,  8,
+       5, 6,  9, 6, 10,  9,
+       6, 7, 10, 7, 11, 10,
+       7, 4, 11, 4,  8, 11,
     ]));
 }
 
