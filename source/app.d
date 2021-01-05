@@ -14,6 +14,7 @@ import bindbc.opengl :
     glViewport;
 
 import dearth :
+    createCube,
     createFragmentShader,
     createPlane,
     createProgram,
@@ -60,8 +61,8 @@ void main()
         auto vertexShader = createVertexShader(import("earth.vert"));
         auto fragmentShader = createFragmentShader(import("earth.frag"));
         auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
-        auto vao = createPlane!Vertex(
-            2, 2,
+        auto vao = createCube!Vertex(
+            2, 2, 2,
             (Point p) => Vertex(
                 [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, 0.0],
                 [

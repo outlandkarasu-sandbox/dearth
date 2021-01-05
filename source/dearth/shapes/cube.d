@@ -34,7 +34,12 @@ in (splitD > 0)
 {
     static assert(isVertexStruct!T);
 
+    scope vertices = CubeSidePoints(splitH, splitV, splitD).map!dg.array;
+    scope indices = CubeSideIndices(splitH, splitV, splitD).array;
+
     auto vao = createVAO!T();
+    vao.loadVertices(vertices);
+    vao.loadIndices(indices);
     return vao;
 }
 
