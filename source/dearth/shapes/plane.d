@@ -3,7 +3,7 @@ Plane shape.
 */
 module dearth.shapes.plane;
 
-import std.algorithm : map;
+import std.algorithm : each;
 import std.array : array;
 
 import dearth.opengl :
@@ -13,7 +13,8 @@ import dearth.opengl :
 
 import dearth.shapes.utils :
     PlanePoints,
-    PlanePointPaths;
+    PlanePointPaths,
+    PointAppender;
 
 /**
 Params:
@@ -32,13 +33,11 @@ in (splitV > 0)
 
     immutable pointsH = splitH + 1;
     immutable pointsV = splitV + 1;
-    scope vertices = PlanePoints(pointsH, pointsV).map!dg.array;
-    scope indices = PlanePointPaths(splitH, splitV)
-        .map!(p => cast(ushort)(p.y * pointsH + p.x))
-        .array;
+    scope appender = PointAppender!T();
+    PlanePointPaths(splitH, splitV).each!((p) => appender.add(p, dg));
     auto vao = createVAO!T();
-    vao.loadVertices(vertices);
-    vao.loadIndices(indices);
+    vao.loadVertices(appender.vertices);
+    vao.loadIndices(appender.indices);
     return vao;
 }
 

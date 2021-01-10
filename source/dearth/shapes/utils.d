@@ -158,7 +158,7 @@ struct PointAppender(V)
         if (!p)
         {
             vertices_.put(generator(point));
-            immutable index = vertices_[].length - 1;
+            immutable index = cast(ushort)(vertices_[].length - 1);
             indexMap_[point] = index;
             indices_ ~= index;
         }
@@ -175,7 +175,7 @@ struct PointAppender(V)
             return vertices_[];
         }
 
-        immutable(size_t)[] indices() scope return
+        immutable(ushort)[] indices() scope return
         {
             return indices_[];
         }
@@ -183,8 +183,8 @@ struct PointAppender(V)
 
 private:
     Appender!(immutable(V)[]) vertices_;
-    Appender!(immutable(size_t)[]) indices_;
-    size_t[Point] indexMap_;
+    Appender!(immutable(ushort)[]) indices_;
+    ushort[Point] indexMap_;
 }
 
 ///
