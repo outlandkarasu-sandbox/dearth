@@ -103,58 +103,61 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
             return m;
         }
 
-        /**
-        Create rotation X matrix.
-
-        Params:
-            theta = rotate theta.
-        Returns:
-            rotation matrix.
-        */
-        static typeof(this) rotateX(E theta) if (ROWS == 4 && COLS == 4)
+        static if (ROWS == 4 && COLS == 4)
         {
-            auto m = typeof(this).unit();
-            m[1, 1] = cos(x);
-            m[1, 2] = -sin(x);
-            m[2, 1] = sin(x);
-            m[2, 2] = cos(x);
-            return m;
-        }
+            /**
+            Create rotation X matrix.
 
-        /**
-        Create rotation Y matrix.
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateX(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[1, 1] = cos(theta);
+                m[1, 2] = -sin(theta);
+                m[2, 1] = sin(theta);
+                m[2, 2] = cos(theta);
+                return m;
+            }
 
-        Params:
-            theta = rotate theta.
-        Returns:
-            rotation matrix.
-        */
-        static typeof(this) rotateY(E theta) if (ROWS == 4 && COLS == 4)
-        {
-            auto m = typeof(this).unit();
-            m[0, 0] = cos(x);
-            m[0, 2] = sin(x);
-            m[2, 0] = -sin(x);
-            m[2, 2] = cos(x);
-            return m;
-        }
+            /**
+            Create rotation Y matrix.
 
-        /**
-        Create rotation Z matrix.
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateY(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[0, 0] = cos(theta);
+                m[0, 2] = sin(theta);
+                m[2, 0] = -sin(theta);
+                m[2, 2] = cos(theta);
+                return m;
+            }
 
-        Params:
-            theta = rotate theta.
-        Returns:
-            rotation matrix.
-        */
-        static typeof(this) rotateZ(E theta) if (ROWS == 4 && COLS == 4)
-        {
-            auto m = typeof(this).unit();
-            m[0, 0] = cos(x);
-            m[0, 1] = -sin(x);
-            m[1, 0] = sin(x);
-            m[1, 1] = cos(x);
-            return m;
+            /**
+            Create rotation Z matrix.
+
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateZ(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[0, 0] = cos(theta);
+                m[0, 1] = -sin(theta);
+                m[1, 0] = sin(theta);
+                m[1, 1] = cos(theta);
+                return m;
+            }
         }
     }
 
