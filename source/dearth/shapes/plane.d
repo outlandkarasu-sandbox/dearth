@@ -28,8 +28,6 @@ in (splitV > 0)
 {
     static assert(isVertexStruct!T);
 
-    immutable pointsH = splitH + 1;
-    immutable pointsV = splitV + 1;
     scope builder = VAOBuilder!T();
     PlanePointPaths(splitH, splitV).each!((p) => builder.add(p, dg));
     return builder.build();
