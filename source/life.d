@@ -15,7 +15,7 @@ enum Life : ubyte
 /**
 Life game world.
 */
-class PlaneWorld
+abstract class PlaneWorld
 {
     /**
     Initialize by world size.
@@ -128,6 +128,19 @@ class PlaneWorld
         this.currentPlane_ = (currentPlane_ is plane1_) ? plane2_ : plane1_;
     }
 
+protected:
+
+    /**
+    get near edge lives.
+
+    Params:
+        x = cell x.
+        y = cell y.
+    Returns:
+        true if live is.
+    */
+    abstract bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope;
+
 private:
 
     /**
@@ -143,29 +156,39 @@ private:
     in (x < width_)
     in (y < height_)
     {
-        immutable rightEdge = width_ - 1;
-        immutable bottomEdge = height_ - 1;
+        size_t count = 0;
+        if (isLive(x - 1, y - 1)) ++count;
+        if (isLive(x - 1, y    )) ++count;
+        if (isLive(x - 1, y + 1)) ++count;
+        if (isLive(x    , y - 1)) ++count;
+        //if (isLive(x    , y    )) ++count;
+        if (isLive(x    , y + 1)) ++count;
+        if (isLive(x + 1, y - 1)) ++count;
+        if (isLive(x + 1, y    )) ++count;
+        if (isLive(x + 1, y + 1)) ++count;
 
-        immutable left = (x == 0) ? rightEdge : x - 1;
-        immutable right = (x == rightEdge) ? 0 : x + 1;
-        immutable up = (y == 0) ? bottomEdge : y - 1;
-        immutable down = (y == bottomEdge) ? 0 : y + 1;
+        return count;
+    }
 
-        size_t result = 0;
+    /**
+    get near lives.
 
-        if (this[left, up]) ++result;
-        if (this[x, up]) ++result;
-        if (this[right, up]) ++result;
-
-        if (this[left, y]) ++result;
-        // if (this[x, y]) ++result;
-        if (this[right, y]) ++result;
-
-        if (this[left, down]) ++result;
-        if (this[x, down]) ++result;
-        if (this[right, down]) ++result;
-
-        return result;
+    Params:
+        x = cell x.
+        y = cell y.
+    Returns:
+        true if live is.
+    */
+    bool isLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+    {
+        if (x < 0 || width_ <= x || y < 0 || height_ <= y)
+        {
+            return isEdgeLive(x, y);
+        }
+        else
+        {
+            return this[x, y] == Life.exist;
+        }
     }
 
     @property Life[] nextPlane() @nogc nothrow pure return scope
@@ -180,10 +203,52 @@ private:
     size_t height_;
 }
 
+class TorusWorld : PlaneWorld
+{
+    /**
+    Initialize by world size.
+
+    Params:
+        w = world width.
+        h = world height.
+    */
+    this(size_t w, size_t h) nothrow pure scope
+    {
+        super(w, h);
+    }
+
+protected:
+
+    override bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+    {
+        auto liveX = x;
+        if (liveX < 0)
+        {
+            liveX += width_;
+        }
+        else if (width_ <= liveX)
+        {
+            liveX -= width_;
+        }
+
+        auto liveY = y;
+        if (liveY < 0)
+        {
+            liveY += height_;
+        }
+        else if (height_ <= liveY)
+        {
+            liveY -= height_;
+        }
+
+        return this[liveX, liveY] == Life.exist;
+    }
+}
+
 ///
 nothrow pure unittest
 {
-    scope world = new PlaneWorld(100, 100);
+    scope world = new TorusWorld(100, 100);
     assert(world[0, 0] == Life.empty);
     assert(world[99, 99] == Life.empty);
 
@@ -198,7 +263,7 @@ nothrow pure unittest
 
 nothrow pure unittest
 {
-    scope world = new PlaneWorld(100, 100);
+    scope world = new TorusWorld(100, 100);
     world[0, 0] = Life.exist;
 
     assert(world.count(98, 0) == 0);
@@ -223,7 +288,7 @@ nothrow pure unittest
 ///
 nothrow pure unittest
 {
-    scope world = new PlaneWorld(100, 100);
+    scope world = new TorusWorld(100, 100);
     world[0, 0] = Life.exist;
     world[1, 0] = Life.exist;
     world[2, 0] = Life.exist;
@@ -243,3 +308,9 @@ nothrow pure unittest
     assert(!world[2, 99]);
 }
 
+/**
+Life game cube world.
+*/
+class CubeWorld
+{
+}

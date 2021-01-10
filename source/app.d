@@ -34,7 +34,7 @@ import dearth :
     VertexAttribute,
     VertexArrayObject;
 
-import life : World;
+import life : Life, TorusWorld;
 
 struct Vertex
 {
@@ -47,8 +47,8 @@ struct Vertex
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
 
-enum WORLD_WIDTH = 512;
-enum WORLD_HEIGHT = 512;
+enum WORLD_WIDTH = 64;
+enum WORLD_HEIGHT = 64;
 
 void main()
 {
@@ -78,9 +78,9 @@ void main()
             TextureWrap.repeat);
 
         // initialize world.
-        scope world = new World(WORLD_WIDTH, WORLD_HEIGHT);
-        scope lifeChoices = [World.Life.empty, World.Life.exist];
-        foreach (size_t x, size_t y, ref World.Life life; world)
+        scope world = new TorusWorld(WORLD_WIDTH, WORLD_HEIGHT);
+        scope lifeChoices = [Life.empty, Life.exist];
+        foreach (size_t x, size_t y, ref Life life; world)
         {
             life = lifeChoices.choice;
         }
@@ -102,10 +102,9 @@ void main()
             }
 
             world.nextGeneration();
-            foreach (size_t x, size_t y, ref const(World.Life) life; world)
+            foreach (size_t x, size_t y, ref const(Life) life; world)
             {
-                pixels[y * WORLD_WIDTH + x]
-                    = (world[x, y] == World.Life.exist)
+                pixels[y * WORLD_WIDTH + x] = (world[x, y] == Life.exist)
                     ? existsPixel : emptyPixel;
             }
 
