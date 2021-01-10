@@ -3,6 +3,9 @@ Shape utilities.
 */
 module dearth.shapes.utils;
 
+import std.array : Appender;
+import std.exception : assumeWontThrow;
+
 import dearth.shapes.point : Point;
 
 /**
@@ -132,6 +135,80 @@ private:
         Point(0, 1), Point(1, 1), Point(0, 2), Point(1, 1), Point(1, 2), Point(0, 2),
         Point(1, 1), Point(2, 1), Point(1, 2), Point(2, 1), Point(2, 2), Point(1, 2),
     ]));
+}
+
+/**
+Point append buffer.
+
+Params:
+    V = vertex type.
+*/
+struct PointAppender(V)
+{
+    /**
+    Add a point.
+
+    Params:
+        point = required point.
+        generator = vertex generator.
+    */
+    void add(Dg)(auto scope ref const(Point) point, scope Dg generator) nothrow pure @safe scope
+    {
+        const p = point in indexMap_;
+        if (!p)
+        {
+            vertices_.put(generator(point));
+            immutable index = vertices_[].length - 1;
+            indexMap_[point] = index;
+            indices_ ~= index;
+        }
+        else
+        {
+            indices_ ~= *p;
+        }
+    }
+
+    @property const @nogc nothrow pure @safe
+    {
+        immutable(V)[] vertices() scope return
+        {
+            return vertices_[];
+        }
+
+        immutable(size_t)[] indices() scope return
+        {
+            return indices_[];
+        }
+    }
+
+private:
+    Appender!(immutable(V)[]) vertices_;
+    Appender!(immutable(size_t)[]) indices_;
+    size_t[Point] indexMap_;
+}
+
+///
+nothrow pure @safe unittest
+{
+    struct Vertex
+    {
+        float x;
+        float y;
+        float z;
+    }
+
+    auto appender = PointAppender!Vertex();
+    appender.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0)]);
+    assert(appender.indices == [0]);
+
+    appender.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0)]);
+    assert(appender.indices == [0, 0]);
+
+    appender.add(Point(3, 2, 1), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0), Vertex(3.0, 2.0, 1.0)]);
+    assert(appender.indices == [0, 0, 1]);
 }
 
 private:
