@@ -60,6 +60,26 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
             }
             return m;
         }
+
+        /**
+        Create scale matrix.
+
+        Params:
+            factors = scale factors.
+        Returns:
+            scale matrix.
+        */
+        static typeof(this) scale(Factors...)(Factors factors)
+        {
+            static assert(factors.length == COLS - 1);
+            auto m = typeof(this)();
+            foreach (i, f; factors)
+            {
+                m[i, i] = cast(E) f;
+            }
+            m[COLS - 1, ROWS - 1] = cast(E) 1.0;
+            return m;
+        }
     }
 
     @property const scope
@@ -346,3 +366,14 @@ private:
     assert(isClose(*(m.ptr), 1.0));
 }
 
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).scale(2.0, 3.0, 4.0);
+    assert(m[0, 0].isClose(2.0));
+    assert(m[1, 1].isClose(3.0));
+    assert(m[2, 2].isClose(4.0));
+    assert(m[3, 3].isClose(1.0));
+}
