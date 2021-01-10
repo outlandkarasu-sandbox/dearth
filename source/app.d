@@ -64,7 +64,7 @@ void main()
         auto vao = createCube!Vertex(
             2, 2, 2,
             (Point p) => Vertex(
-                [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, 0.0],
+                [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, p.z / 2.0 - 0.5],
                 [
                     cast(ubyte)(p.x * ubyte.max / 2),
                     cast(ubyte)(p.y * ubyte.max / 2),
@@ -90,6 +90,9 @@ void main()
         immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
 
         float actualFPS = info.actualFPS;
+        float rx = 0.0;
+        float ry = 0.0;
+        float rz = 0.0;
         info.run({
             // show FPS.
             if (actualFPS != info.actualFPS)
@@ -114,7 +117,14 @@ void main()
                 vao,
                 texture,
                 WINDOW_WIDTH,
-                WINDOW_HEIGHT);
+                WINDOW_HEIGHT,
+                rx,
+                ry,
+                rz);
+
+            rx += 0.05f;
+            ry += 0.05f;
+            rz += 0.05f;
         });
     });
 }
@@ -124,7 +134,10 @@ void draw(
     scope ref VertexArrayObject!Vertex vao,
     scope ref Texture texture,
     uint width,
-    uint height)
+    uint height,
+    float x,
+    float y,
+    float z)
 {
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -135,12 +148,17 @@ void draw(
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
 
     program.duringUse({
-        immutable m = Mat4.unit;
-        Mat4 projection = m;
+        Mat4 tmp;
+        Mat4 model;
+        tmp.mul(Mat4.rotateY(y), Mat4.rotateX(x));
+        model.mul(Mat4.rotateZ(z), tmp);
+
+        immutable view = Mat4.unit;
+        auto projection = Mat4.unit;
         projection[0, 0] = (cast(float) height) / width;
         program
-            .uniform(modelLocation, m)
-            .uniform(viewLocation, m)
+            .uniform(modelLocation, model)
+            .uniform(viewLocation, view)
             .uniform(projectionLocation, projection);
         vao.duringBind(()
         {

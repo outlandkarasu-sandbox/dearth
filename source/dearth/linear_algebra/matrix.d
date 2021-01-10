@@ -3,6 +3,7 @@ Matrix module.
 */
 module dearth.linear_algebra.matrix;
 
+import std.math : cos, sin;
 import std.traits : isNumeric;
 
 /**
@@ -59,6 +60,104 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
                 }
             }
             return m;
+        }
+
+        /**
+        Create scale matrix.
+
+        Params:
+            factors = scale factors.
+        Returns:
+            scale matrix.
+        */
+        static typeof(this) scale(Factors...)(Factors factors)
+        {
+            static assert(factors.length == COLS - 1);
+            auto m = typeof(this)();
+            m.fill(cast(E) 0);
+            foreach (i, f; factors)
+            {
+                m[i, i] = cast(E) f;
+            }
+            m[ROWS - 1, COLS - 1] = cast(E) 1.0;
+            return m;
+        }
+
+        /**
+        Create translate matrix.
+
+        Params:
+            factors = translate factors.
+        Returns:
+            translate matrix.
+        */
+        static typeof(this) translate(Factors...)(Factors factors)
+        {
+            static assert(factors.length == COLS - 1);
+
+            auto m = typeof(this).unit();
+            foreach (i, f; factors)
+            {
+                m[i, COLS - 1] = cast(E) f;
+            }
+            return m;
+        }
+
+        static if (ROWS == 4 && COLS == 4)
+        {
+            /**
+            Create rotation X matrix.
+
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateX(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[1, 1] = cos(theta);
+                m[1, 2] = -sin(theta);
+                m[2, 1] = sin(theta);
+                m[2, 2] = cos(theta);
+                return m;
+            }
+
+            /**
+            Create rotation Y matrix.
+
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateY(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[0, 0] = cos(theta);
+                m[0, 2] = sin(theta);
+                m[2, 0] = -sin(theta);
+                m[2, 2] = cos(theta);
+                return m;
+            }
+
+            /**
+            Create rotation Z matrix.
+
+            Params:
+                theta = rotate theta.
+            Returns:
+                rotation matrix.
+            */
+            static typeof(this) rotateZ(E theta)
+            {
+                auto m = typeof(this).unit();
+                m[0, 0] = cos(theta);
+                m[0, 1] = -sin(theta);
+                m[1, 0] = sin(theta);
+                m[1, 1] = cos(theta);
+                return m;
+            }
         }
     }
 
@@ -344,5 +443,48 @@ private:
 
     immutable m = Matrix!(2, 2)([[1, 2], [3, 4]]);
     assert(isClose(*(m.ptr), 1.0));
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).scale(2.0, 3.0, 4.0);
+    assert(m[0, 0].isClose(2.0));
+    assert(m[1, 1].isClose(3.0));
+    assert(m[2, 2].isClose(4.0));
+    assert(m[3, 3].isClose(1.0));
+
+    foreach (i; 0 .. 4)
+    {
+        foreach (j; 0 .. 4)
+        {
+            if (i != j)
+            {
+                assert(m[i, j].isClose(0.0));
+            }
+        }
+    }
+}
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).translate(2.0, 3.0, 4.0);
+    assert(m[0, 3].isClose(2.0));
+    assert(m[1, 3].isClose(3.0));
+    assert(m[2, 3].isClose(4.0));
+    assert(m[3, 3].isClose(1.0));
+
+    foreach (i; 0 .. 4)
+    {
+        foreach (j; 0 .. 3)
+        {
+            assert(m[i, j].isClose((i != j) ? 0.0 : 1.0));
+        }
+    }
 }
 
