@@ -73,11 +73,32 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         {
             static assert(factors.length == COLS - 1);
             auto m = typeof(this)();
+            m.fill(cast(E) 0);
             foreach (i, f; factors)
             {
                 m[i, i] = cast(E) f;
             }
-            m[COLS - 1, ROWS - 1] = cast(E) 1.0;
+            m[ROWS - 1, COLS - 1] = cast(E) 1.0;
+            return m;
+        }
+
+        /**
+        Create offset matrix.
+
+        Params:
+            factors = offset factors.
+        Returns:
+            offset matrix.
+        */
+        static typeof(this) offset(Factors...)(Factors factors)
+        {
+            static assert(factors.length == COLS - 1);
+
+            auto m = typeof(this).unit();
+            foreach (i, f; factors)
+            {
+                m[ROWS - 1, i] = cast(E) f;
+            }
             return m;
         }
     }
@@ -376,4 +397,36 @@ private:
     assert(m[1, 1].isClose(3.0));
     assert(m[2, 2].isClose(4.0));
     assert(m[3, 3].isClose(1.0));
+
+    foreach (i; 0 .. 4)
+    {
+        foreach (j; 0 .. 4)
+        {
+            if (i != j)
+            {
+                assert(m[i, j].isClose(0.0));
+            }
+        }
+    }
 }
+
+///
+@nogc nothrow pure @safe unittest
+{
+    import std.math : isClose;
+
+    immutable m = Matrix!(4, 4).offset(2.0, 3.0, 4.0);
+    assert(m[3, 0].isClose(2.0));
+    assert(m[3, 1].isClose(3.0));
+    assert(m[3, 2].isClose(4.0));
+    assert(m[3, 3].isClose(1.0));
+
+    foreach (i; 0 .. 3)
+    {
+        foreach (j; 0 .. 4)
+        {
+            assert(m[i, j].isClose((i != j) ? 0.0 : 1.0));
+        }
+    }
+}
+
