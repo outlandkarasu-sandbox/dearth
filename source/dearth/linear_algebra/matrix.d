@@ -83,21 +83,21 @@ struct Matrix(size_t ROWS, size_t COLS, E = float)
         }
 
         /**
-        Create offset matrix.
+        Create translate matrix.
 
         Params:
-            factors = offset factors.
+            factors = translate factors.
         Returns:
-            offset matrix.
+            translate matrix.
         */
-        static typeof(this) offset(Factors...)(Factors factors)
+        static typeof(this) translate(Factors...)(Factors factors)
         {
             static assert(factors.length == COLS - 1);
 
             auto m = typeof(this).unit();
             foreach (i, f; factors)
             {
-                m[ROWS - 1, i] = cast(E) f;
+                m[i, COLS - 1] = cast(E) f;
             }
             return m;
         }
@@ -415,15 +415,15 @@ private:
 {
     import std.math : isClose;
 
-    immutable m = Matrix!(4, 4).offset(2.0, 3.0, 4.0);
-    assert(m[3, 0].isClose(2.0));
-    assert(m[3, 1].isClose(3.0));
-    assert(m[3, 2].isClose(4.0));
+    immutable m = Matrix!(4, 4).translate(2.0, 3.0, 4.0);
+    assert(m[0, 3].isClose(2.0));
+    assert(m[1, 3].isClose(3.0));
+    assert(m[2, 3].isClose(4.0));
     assert(m[3, 3].isClose(1.0));
 
-    foreach (i; 0 .. 3)
+    foreach (i; 0 .. 4)
     {
-        foreach (j; 0 .. 4)
+        foreach (j; 0 .. 3)
         {
             assert(m[i, j].isClose((i != j) ? 0.0 : 1.0));
         }
