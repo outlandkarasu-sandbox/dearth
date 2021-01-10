@@ -6,6 +6,10 @@ module dearth.shapes.utils;
 import std.array : Appender;
 import std.exception : assumeWontThrow;
 
+import dearth.opengl :
+    VertexArrayObject,
+    createVAO,
+    isVertexStruct;
 import dearth.shapes.point : Point;
 
 /**
@@ -138,13 +142,15 @@ private:
 }
 
 /**
-Point append buffer.
+VAO builder.
 
 Params:
     V = vertex type.
 */
-struct PointAppender(V)
+struct VAOBuilder(V)
 {
+    static assert(isVertexStruct!V);
+
     /**
     Add a point.
 
@@ -181,6 +187,20 @@ struct PointAppender(V)
         }
     }
 
+    /**
+    Build VAO.
+
+    Returns:
+        VAO instance.
+    */
+    VertexArrayObject!V build() const @nogc scope
+    {
+        auto vao = createVAO!V();
+        vao.loadVertices(vertices);
+        vao.loadIndices(indices);
+        return vao;
+    }
+
 private:
     Appender!(immutable(V)[]) vertices_;
     Appender!(immutable(ushort)[]) indices_;
@@ -197,18 +217,18 @@ nothrow pure @safe unittest
         float z;
     }
 
-    auto appender = PointAppender!Vertex();
-    appender.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
-    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0)]);
-    assert(appender.indices == [0]);
+    scope builder = VAOBuilder!Vertex();
+    builder.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(builder.vertices == [Vertex(1.0, 2.0, 3.0)]);
+    assert(builder.indices == [0]);
 
-    appender.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
-    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0)]);
-    assert(appender.indices == [0, 0]);
+    builder.add(Point(1, 2, 3), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(builder.vertices == [Vertex(1.0, 2.0, 3.0)]);
+    assert(builder.indices == [0, 0]);
 
-    appender.add(Point(3, 2, 1), (Point p) => Vertex(p.x, p.y, p.z));
-    assert(appender.vertices == [Vertex(1.0, 2.0, 3.0), Vertex(3.0, 2.0, 1.0)]);
-    assert(appender.indices == [0, 0, 1]);
+    builder.add(Point(3, 2, 1), (Point p) => Vertex(p.x, p.y, p.z));
+    assert(builder.vertices == [Vertex(1.0, 2.0, 3.0), Vertex(3.0, 2.0, 1.0)]);
+    assert(builder.indices == [0, 0, 1]);
 }
 
 private:

@@ -4,17 +4,14 @@ Plane shape.
 module dearth.shapes.plane;
 
 import std.algorithm : each;
-import std.array : array;
 
 import dearth.opengl :
-    createVAO,
     isVertexStruct,
     VertexArrayObject;
 
 import dearth.shapes.utils :
-    PlanePoints,
     PlanePointPaths,
-    PointAppender;
+    VAOBuilder;
 
 /**
 Params:
@@ -33,11 +30,8 @@ in (splitV > 0)
 
     immutable pointsH = splitH + 1;
     immutable pointsV = splitV + 1;
-    scope appender = PointAppender!T();
-    PlanePointPaths(splitH, splitV).each!((p) => appender.add(p, dg));
-    auto vao = createVAO!T();
-    vao.loadVertices(appender.vertices);
-    vao.loadIndices(appender.indices);
-    return vao;
+    scope builder = VAOBuilder!T();
+    PlanePointPaths(splitH, splitV).each!((p) => builder.add(p, dg));
+    return builder.build();
 }
 

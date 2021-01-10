@@ -14,7 +14,7 @@ import dearth.opengl :
 import dearth.shapes.point : Point;
 import dearth.shapes.utils :
    PlanePoints,
-   PlanePointPaths; 
+   PlanePointPaths;
 
 /**
 Params:
