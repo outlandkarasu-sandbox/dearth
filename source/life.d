@@ -5,17 +5,18 @@ module life;
 
 @safe:
 
+/// Life value.
+enum Life : ubyte
+{
+    empty = 0,
+    exist = 1,
+}
+
 /**
 Life game world.
 */
-class World
+class PlaneWorld
 {
-    enum Life : ubyte
-    {
-        empty = 0,
-        exist = 1,
-    }
-
     /**
     Initialize by world size.
 
@@ -182,23 +183,23 @@ private:
 ///
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    assert(world[0, 0] == World.Life.empty);
-    assert(world[99, 99] == World.Life.empty);
+    scope world = new PlaneWorld(100, 100);
+    assert(world[0, 0] == Life.empty);
+    assert(world[99, 99] == Life.empty);
 
-    world[0, 0] = World.Life.exist;
-    assert(world[0, 0] == World.Life.exist);
-    assert(world[99, 99] == World.Life.empty);
+    world[0, 0] = Life.exist;
+    assert(world[0, 0] == Life.exist);
+    assert(world[99, 99] == Life.empty);
 
-    world[99, 99] = World.Life.exist;
-    assert(world[0, 0] == World.Life.exist);
-    assert(world[99, 99] == World.Life.exist);
+    world[99, 99] = Life.exist;
+    assert(world[0, 0] == Life.exist);
+    assert(world[99, 99] == Life.exist);
 }
 
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    world[0, 0] = World.Life.exist;
+    scope world = new PlaneWorld(100, 100);
+    world[0, 0] = Life.exist;
 
     assert(world.count(98, 0) == 0);
     assert(world.count(99, 0) == 1);
@@ -222,10 +223,10 @@ nothrow pure unittest
 ///
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    world[0, 0] = World.Life.exist;
-    world[1, 0] = World.Life.exist;
-    world[2, 0] = World.Life.exist;
+    scope world = new PlaneWorld(100, 100);
+    world[0, 0] = Life.exist;
+    world[1, 0] = Life.exist;
+    world[2, 0] = Life.exist;
 
     world.nextGeneration();
 
