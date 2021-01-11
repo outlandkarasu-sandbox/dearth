@@ -67,8 +67,8 @@ void main()
             (CubePoint p) => Vertex(
                 [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, p.z / 2.0 - 0.5],
                 [
-                    cast(ubyte)(p.x * ubyte.max / 2),
-                    cast(ubyte)(p.y * ubyte.max / 2),
+                    cast(ubyte)(p.sideX * ubyte.max / 2),
+                    cast(ubyte)(p.sideY * ubyte.max / 2),
                 ]));
 
         auto texture = createTexture(
