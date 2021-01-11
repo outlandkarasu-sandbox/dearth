@@ -21,6 +21,7 @@ import dearth :
     createTexture,
     createVAO,
     createVertexShader,
+    CubePoint,
     dearthMain,
     Mat4,
     PixelRGBA,
@@ -63,7 +64,7 @@ void main()
         auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
         auto vao = createCube!Vertex(
             2, 2, 2,
-            (Point p) => Vertex(
+            (CubePoint p) => Vertex(
                 [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, p.z / 2.0 - 0.5],
                 [
                     cast(ubyte)(p.x * ubyte.max / 2),

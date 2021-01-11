@@ -128,6 +128,19 @@ abstract class PlaneWorld
         this.currentPlane_ = (currentPlane_ is plane1_) ? plane2_ : plane1_;
     }
 
+    @property const @nogc nothrow pure @safe
+    {
+        size_t width() scope
+        {
+            return width_;
+        }
+
+        size_t height() scope
+        {
+            return height_;
+        }
+    }
+
 protected:
 
     /**
@@ -313,4 +326,83 @@ Life game cube world.
 */
 class CubeWorld
 {
+    /**
+    Plane type.
+    */
+    enum Plane 
+    {
+        front,
+        left,
+        right,
+        back,
+        top,
+        bottom
+    }
+
+    /**
+    Initialize cube world.
+
+    Params:
+        width = cube width.
+        height = cube height.
+        depth = cube depth.
+    */
+    this(size_t width, size_t height, size_t depth) nothrow pure @safe scope
+    {
+        this.width_ = width;
+        this.height_ = height;
+        this.depth_ = depth;
+    }
+
+    /**
+    Get life.
+
+    Params:
+        plane = plane type.
+        x = x position.
+        y = y position.
+    Returns:
+        a life.
+    */
+    Life get(Plane plane, size_t x, size_t y) const @nogc nothrow pure scope
+    in (x < width_)
+    in (y < height_)
+    {
+        return Life.empty;
+    }
+
+    /**
+    Move to next generation state.
+    */
+    void nextGeneration() @nogc nothrow pure scope
+    {
+    }
+
+private:
+
+    class InnerWorld : PlaneWorld
+    {
+        this(size_t w, size_t h) nothrow pure scope
+        {
+            super(w, h);
+        }
+
+    protected:
+
+        override bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+        {
+            return false;
+        }
+
+    private:
+        PlaneWorld left_;
+        PlaneWorld right_;
+        PlaneWorld top_;
+        PlaneWorld bottom_;
+    }
+
+    size_t width_;
+    size_t height_;
+    size_t depth_;
 }
+

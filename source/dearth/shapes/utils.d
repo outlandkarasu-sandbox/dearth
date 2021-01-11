@@ -146,8 +146,9 @@ VAO builder.
 
 Params:
     V = vertex type.
+    P = point type.
 */
-struct VAOBuilder(V)
+struct VAOBuilder(V, P = Point)
 {
     static assert(isVertexStruct!V);
 
@@ -158,7 +159,7 @@ struct VAOBuilder(V)
         point = required point.
         generator = vertex generator.
     */
-    void add(Dg)(auto scope ref const(Point) point, scope Dg generator) nothrow pure @safe scope
+    void add(Dg)(auto scope ref const(P) point, scope Dg generator) nothrow pure @safe scope
     {
         const p = point in indexMap_;
         if (!p)
@@ -204,7 +205,7 @@ struct VAOBuilder(V)
 private:
     Appender!(immutable(V)[]) vertices_;
     Appender!(immutable(ushort)[]) indices_;
-    ushort[Point] indexMap_;
+    ushort[P] indexMap_;
 }
 
 ///
