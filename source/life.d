@@ -367,7 +367,7 @@ class CubeWorld
         inout(PlaneWorld) left() inout return scope { return left_; }
         inout(PlaneWorld) right() inout return scope { return right_; }
         inout(PlaneWorld) front() inout return scope { return front_; }
-        inout(PlaneWorld) back() inout return scope { return left_; }
+        inout(PlaneWorld) back() inout return scope { return back_; }
         inout(PlaneWorld) top() inout return scope { return top_; }
         inout(PlaneWorld) bottom() inout return scope { return bottom_; }
     }
@@ -522,12 +522,12 @@ private:
     size_t height_;
     size_t depth_;
 
-    InnerWorld front_;
-    InnerWorld left_;
-    InnerWorld right_;
-    InnerWorld back_;
-    InnerWorld top_;
-    InnerWorld bottom_;
+    PlaneWorld front_;
+    PlaneWorld left_;
+    PlaneWorld right_;
+    PlaneWorld back_;
+    PlaneWorld top_;
+    PlaneWorld bottom_;
 
     LinkedPair[] linkedPairs_;
 }

@@ -125,25 +125,27 @@ struct Texture
 
     Params:
         T = pixel type.
+        textureUnit = texture unit number.
         width = image width.
         height = image height.
         pixels = image pixels.
     */
-    void image2D(T)(uint width, uint height, scope const(T)[] pixels) scope if(isPixelType!T)
+    void image2D(T)(uint textureUnit, uint width, uint height, scope const(T)[] pixels) scope if(isPixelType!T)
     in (pixels.length == width * height)
     {
-        duringBind({
-            enforceGL!(() => glTexImage2D(
-                GL_TEXTURE_2D,
-                0,
-                T.PixelFormat,
-                width,
-                height,
-                0,
-                T.PixelFormat,
-                T.PixelType,
-                pixels.ptr));
-        });
+        activeAndBind(textureUnit);
+        scope(exit) glBindTexture(payload_.type, 0);
+
+        enforceGL!(() => glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            T.PixelFormat,
+            width,
+            height,
+            0,
+            T.PixelFormat,
+            T.PixelType,
+            pixels.ptr));
     }
 
 private:

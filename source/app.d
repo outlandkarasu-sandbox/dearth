@@ -50,9 +50,9 @@ struct Vertex
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
 
-enum WORLD_WIDTH = 64;
-enum WORLD_HEIGHT = 64;
-enum WORLD_DEPTH = 64;
+enum WORLD_WIDTH = 128;
+enum WORLD_HEIGHT = 128;
+enum WORLD_DEPTH = 128;
 
 struct PlaneTexture
 {
@@ -81,7 +81,7 @@ struct PlaneTexture
                 ? existsPixel : emptyPixel;
         }
 
-        texture_.image2D(width, height, pixels_[]);
+        texture_.image2D(index_, width, height, pixels_[]);
         texture_.activeAndBind(index_);
     }
 
@@ -159,9 +159,9 @@ void main()
                 ry,
                 rz);
 
-            rx += 0.05f;
-            ry += 0.05f;
-            rz += 0.05f;
+            rx += 0.01f;
+            ry += 0.01f;
+            rz += 0.01f;
         });
     });
 }
@@ -182,6 +182,7 @@ void draw(
     immutable modelLocation = program.getUniformLocation("modelMatrix");
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
+    immutable textureLocation = program.getUniformLocation("textureSampler1");
 
     program.duringUse({
         Mat4 tmp;
@@ -195,7 +196,8 @@ void draw(
         program
             .uniform(modelLocation, model)
             .uniform(viewLocation, view)
-            .uniform(projectionLocation, projection);
+            .uniform(projectionLocation, projection)
+            .uniform(textureLocation, 1);
         vao.duringBind(()
         {
             vao.drawElements();
