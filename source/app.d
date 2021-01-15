@@ -45,6 +45,8 @@ struct Vertex
 
     @(VertexAttribute.normalized)
     ubyte[2] uv;
+
+    float plane;
 }
 
 enum WINDOW_WIDTH = 640;
@@ -113,24 +115,28 @@ void main()
                 [
                     cast(ubyte)(p.sideX * ubyte.max / 2),
                     cast(ubyte)(p.sideY * ubyte.max / 2),
-                ]));
+                ],
+                cast(float) p.side));
 
         // initialize world.
         scope world = new CubeWorld(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
         scope lifeChoices = [Life.empty, Life.exist];
         scope textures = appender!(PlaneTexture[])();
         foreach (i, plane; [
-                world.front,
                 world.left,
+                world.front,
                 world.right,
                 world.back,
                 world.top,
                 world.bottom,
             ])
         {
-            foreach (size_t x, size_t y, ref Life life; plane)
+            if (i == 0)
             {
-                life = lifeChoices.choice;
+                foreach (size_t x, size_t y, ref Life life; plane)
+                {
+                    life = lifeChoices.choice;
+                }
             }
             textures ~= PlaneTexture(plane, cast(uint) i);
         }
@@ -182,7 +188,12 @@ void draw(
     immutable modelLocation = program.getUniformLocation("modelMatrix");
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
-    immutable textureLocation = program.getUniformLocation("textureSampler1");
+    immutable frontTextureLocation = program.getUniformLocation("frontTexture");
+    immutable leftTextureLocation = program.getUniformLocation("leftTexture");
+    immutable rightTextureLocation = program.getUniformLocation("rightTexture");
+    immutable backTextureLocation = program.getUniformLocation("backTexture");
+    immutable topTextureLocation = program.getUniformLocation("topTexture");
+    immutable bottomTextureLocation = program.getUniformLocation("bottomTexture");
 
     program.duringUse({
         Mat4 tmp;
@@ -197,7 +208,12 @@ void draw(
             .uniform(modelLocation, model)
             .uniform(viewLocation, view)
             .uniform(projectionLocation, projection)
-            .uniform(textureLocation, 1);
+            .uniform(frontTextureLocation, 0)
+            .uniform(leftTextureLocation, 1)
+            .uniform(rightTextureLocation, 2)
+            .uniform(backTextureLocation, 3)
+            .uniform(topTextureLocation, 4)
+            .uniform(bottomTextureLocation, 5);
         vao.duringBind(()
         {
             vao.drawElements();
