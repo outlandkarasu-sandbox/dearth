@@ -360,6 +360,23 @@ class CubeWorld
         this.back_ = new InnerWorld(width, height);
         this.top_ = new InnerWorld(width, depth);
         this.bottom_ = new InnerWorld(width, depth);
+
+        this.linkedPairs_ = [
+            LinkedPair(front_, Edge.left, right_, Edge.right, false),
+            LinkedPair(front_, Edge.right, left_, Edge.left, false),
+            LinkedPair(back_, Edge.left, left_, Edge.right, false),
+            LinkedPair(back_, Edge.right, right_, Edge.left, false),
+
+            LinkedPair(top_, Edge.left, right_, Edge.top, false),
+            LinkedPair(top_, Edge.top, back_, Edge.top, true),
+            LinkedPair(top_, Edge.right, left_, Edge.top, true),
+            LinkedPair(top_, Edge.bottom, front_, Edge.top, false),
+
+            LinkedPair(bottom_, Edge.left, right_, Edge.bottom, true),
+            LinkedPair(bottom_, Edge.top, front_, Edge.bottom, false),
+            LinkedPair(bottom_, Edge.right, left_, Edge.bottom, false),
+            LinkedPair(bottom_, Edge.bottom, back_, Edge.bottom, true),
+        ];
     }
 
     @property @nogc nothrow pure
