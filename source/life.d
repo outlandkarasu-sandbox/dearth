@@ -3,6 +3,8 @@ Life game module.
 */
 module life;
 
+import std.typecons : Nullable, nullable;
+
 @safe:
 
 /// Life value.
@@ -327,19 +329,6 @@ Life game cube world.
 class CubeWorld
 {
     /**
-    Plane type.
-    */
-    enum Plane 
-    {
-        front,
-        left,
-        right,
-        back,
-        top,
-        bottom
-    }
-
-    /**
     Initialize cube world.
 
     Params:
@@ -352,23 +341,13 @@ class CubeWorld
         this.width_ = width;
         this.height_ = height;
         this.depth_ = depth;
-    }
 
-    /**
-    Get life.
-
-    Params:
-        plane = plane type.
-        x = x position.
-        y = y position.
-    Returns:
-        a life.
-    */
-    Life get(Plane plane, size_t x, size_t y) const @nogc nothrow pure scope
-    in (x < width_)
-    in (y < height_)
-    {
-        return Life.empty;
+        this.front_ = new InnerWorld(width, height);
+        this.left_ = new InnerWorld(depth, height);
+        this.right_ = new InnerWorld(depth, height);
+        this.back_ = new InnerWorld(width, height);
+        this.top_ = new InnerWorld(width, depth);
+        this.bottom_ = new InnerWorld(width, depth);
     }
 
     /**
@@ -379,6 +358,72 @@ class CubeWorld
     }
 
 private:
+
+    enum Edge { left, right, top, bottom }
+
+    struct Link
+    {
+        PlaneWorld plane;
+        Edge edge;
+        bool reverse;
+
+        bool isLiveUnderflow(ptrdiff_t a, ptrdiff_t b) const @nogc nothrow pure scope
+        {
+            immutable dw = plane.width;
+            immutable dh = plane.height;
+            final switch (edge)
+            {
+                case Edge.right:
+                    return plane.isLive(dw + a, reverse ? dh - b - 1 : b);
+                case Edge.left:
+                    return plane.isLive(-a - 1, reverse ? dh - b - 1 : b);
+                case Edge.top:
+                    return plane.isLive(reverse ? dw - b - 1 : b, -a - 1);
+                case Edge.bottom:
+                    return plane.isLive(reverse ? dw - b - 1 : b, dh + a);
+            }
+        }
+
+        bool isLiveOverflow(ptrdiff_t a, ptrdiff_t b) const @nogc nothrow pure scope
+        {
+            immutable dw = plane.width;
+            immutable dh = plane.height;
+            final switch (edge)
+            {
+                case Edge.right:
+                    return plane.isLive(dw - a - 1, reverse ? dh - b - 1 : b);
+                case Edge.left:
+                    return plane.isLive(a, reverse ? dh - b - 1 : b);
+                case Edge.top:
+                    return plane.isLive(reverse ? dw - b - 1 : b, a);
+                case Edge.bottom:
+                    return plane.isLive(reverse ? dw - b - 1 : b, dh - a - 1);
+            }
+        }
+    }
+
+    struct LinkedPair
+    {
+        PlaneWorld plane1;
+        Edge edge1;
+        PlaneWorld plane2;
+        Edge edge2;
+        bool reverse;
+
+        Nullable!(const(Link)) getLinked(scope const(PlaneWorld) plane, Edge edge) const nothrow @nogc pure
+        {
+            if (plane1 is plane && edge1 == edge)
+            {
+                return nullable(const(Link)(plane2, edge2, reverse));
+            }
+            else if (plane2 is plane && edge2 == edge)
+            {
+                return nullable(const(Link)(plane1, edge1, reverse));
+            }
+
+            return typeof(return).init;
+        }
+    }
 
     class InnerWorld : PlaneWorld
     {
@@ -391,18 +436,68 @@ private:
 
         override bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
         {
+            if (x < 0)
+            {
+                auto link = getLinked(this, Edge.left);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveUnderflow(x, y);
+                }
+            }
+            else if (width <= x)
+            {
+                auto link = getLinked(this, Edge.right);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveOverflow(x - width, y);
+                }
+            }
+            else if (y < 0)
+            {
+                auto link = getLinked(this, Edge.top);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveUnderflow(y, x);
+                }
+            }
+            else if (height <= y)
+            {
+                auto link = getLinked(this, Edge.bottom);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveOverflow(y, x - height);
+                }
+            }
+
             return false;
         }
+    }
 
-    private:
-        PlaneWorld left_;
-        PlaneWorld right_;
-        PlaneWorld top_;
-        PlaneWorld bottom_;
+    Nullable!(const(Link)) getLinked(scope const(PlaneWorld) plane, Edge edge) const nothrow @nogc pure
+    {
+        foreach (pair; linkedPairs_)
+        {
+            auto link = pair.getLinked(plane, edge);
+            if (!link.isNull)
+            {
+                return link;
+            }
+        }
+
+        return typeof(return).init;
     }
 
     size_t width_;
     size_t height_;
     size_t depth_;
+
+    InnerWorld front_;
+    InnerWorld left_;
+    InnerWorld right_;
+    InnerWorld back_;
+    InnerWorld top_;
+    InnerWorld bottom_;
+
+    LinkedPair[] linkedPairs_;
 }
 
