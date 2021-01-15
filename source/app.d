@@ -1,5 +1,7 @@
 import std.stdio : writefln;
 import std.random : choice;
+import std.array : appender;
+import std.algorithm : each;
 
 import bindbc.sdl : SDL_QuitEvent;
 import bindbc.opengl :
@@ -35,7 +37,7 @@ import dearth :
     VertexAttribute,
     VertexArrayObject;
 
-import life : Life, TorusWorld;
+import life : Life, PlaneWorld, CubeWorld;
 
 struct Vertex
 {
@@ -50,6 +52,48 @@ enum WINDOW_HEIGHT = 480;
 
 enum WORLD_WIDTH = 64;
 enum WORLD_HEIGHT = 64;
+enum WORLD_DEPTH = 64;
+
+struct PlaneTexture
+{
+    @disable this();
+
+    this(PlaneWorld plane, uint index) scope
+    {
+        this.plane_ = plane;
+        this.texture_ = createTexture(
+            TextureType.texture2D,
+            TextureMinFilter.linear,
+            TextureMagFilter.linear,
+            TextureWrap.repeat,
+            TextureWrap.repeat);
+        this.pixels_.length = plane.width * plane.height;
+        this.index_ = index;
+    }
+
+    void refresh() scope
+    {
+        immutable width = cast(uint) plane_.width;
+        immutable height = cast(uint) plane_.height;
+        foreach (size_t x, size_t y, ref const(Life) life; plane_)
+        {
+            pixels_[y * width + x] = (life == Life.exist)
+                ? existsPixel : emptyPixel;
+        }
+
+        texture_.image2D(width, height, pixels_[]);
+        texture_.activeAndBind(index_);
+    }
+
+private:
+    static immutable existsPixel = PixelRGBA(255, 0, 0, 255);
+    static immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
+
+    PlaneWorld plane_;
+    Texture texture_;
+    PixelRGBA[] pixels_;
+    uint index_;
+}
 
 void main()
 {
@@ -71,24 +115,25 @@ void main()
                     cast(ubyte)(p.sideY * ubyte.max / 2),
                 ]));
 
-        auto texture = createTexture(
-            TextureType.texture2D,
-            TextureMinFilter.linear,
-            TextureMagFilter.linear,
-            TextureWrap.repeat,
-            TextureWrap.repeat);
-
         // initialize world.
-        scope world = new TorusWorld(WORLD_WIDTH, WORLD_HEIGHT);
+        scope world = new CubeWorld(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
         scope lifeChoices = [Life.empty, Life.exist];
-        foreach (size_t x, size_t y, ref Life life; world)
+        scope textures = appender!(PlaneTexture[])();
+        foreach (i, plane; [
+                world.front,
+                world.left,
+                world.right,
+                world.back,
+                world.top,
+                world.bottom,
+            ])
         {
-            life = lifeChoices.choice;
+            foreach (size_t x, size_t y, ref Life life; plane)
+            {
+                life = lifeChoices.choice;
+            }
+            textures ~= PlaneTexture(plane, cast(uint) i);
         }
-
-        scope pixels = new PixelRGBA[WORLD_WIDTH * WORLD_HEIGHT];
-        immutable existsPixel = PixelRGBA(255, 0, 0, 255);
-        immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
 
         float actualFPS = info.actualFPS;
         float rx = 0.0;
@@ -103,19 +148,11 @@ void main()
             }
 
             world.nextGeneration();
-            foreach (size_t x, size_t y, ref const(Life) life; world)
-            {
-                pixels[y * WORLD_WIDTH + x] = (world[x, y] == Life.exist)
-                    ? existsPixel : emptyPixel;
-            }
-
-            texture.image2D(WORLD_WIDTH, WORLD_HEIGHT, pixels[]);
-            texture.activeAndBind(0);
+            textures.each!"a.refresh()";
 
             draw(
                 shaderProgram,
                 vao,
-                texture,
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT,
                 rx,
@@ -132,7 +169,6 @@ void main()
 void draw(
     scope ref ShaderProgram!Vertex program,
     scope ref VertexArrayObject!Vertex vao,
-    scope ref Texture texture,
     uint width,
     uint height,
     float x,

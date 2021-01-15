@@ -126,8 +126,20 @@ abstract class PlaneWorld
                 next[rowOffset + x] = nextLife;
             }
         }
+    }
 
+    /**
+    Swap current plane.
+    */
+    void swapPlane() @nogc nothrow pure scope
+    {
         this.currentPlane_ = (currentPlane_ is plane1_) ? plane2_ : plane1_;
+    }
+
+    void nextGenerationAndSwap() @nogc nothrow pure scope
+    {
+        nextGeneration();
+        swapPlane();
     }
 
     @property const @nogc nothrow pure @safe
@@ -308,7 +320,7 @@ nothrow pure unittest
     world[1, 0] = Life.exist;
     world[2, 0] = Life.exist;
 
-    world.nextGeneration();
+    world.nextGenerationAndSwap();
 
     assert(!world[0, 0]);
     assert( world[1, 0]);
@@ -350,11 +362,30 @@ class CubeWorld
         this.bottom_ = new InnerWorld(width, depth);
     }
 
+    @property @nogc nothrow pure
+    {
+        inout(PlaneWorld) left() inout return scope { return left_; }
+        inout(PlaneWorld) right() inout return scope { return right_; }
+        inout(PlaneWorld) front() inout return scope { return front_; }
+        inout(PlaneWorld) back() inout return scope { return left_; }
+        inout(PlaneWorld) top() inout return scope { return top_; }
+        inout(PlaneWorld) bottom() inout return scope { return bottom_; }
+    }
+
     /**
     Move to next generation state.
     */
     void nextGeneration() @nogc nothrow pure scope
     {
+        foreach (plane; [front_, left_, right_, back_, top_, bottom_])
+        {
+            plane.nextGeneration();
+        }
+
+        foreach (plane; [front_, left_, right_, back_, top_, bottom_])
+        {
+            plane.swapPlane();
+        }
     }
 
 private:
