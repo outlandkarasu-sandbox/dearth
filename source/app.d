@@ -123,8 +123,8 @@ void main()
         scope lifeChoices = [Life.empty, Life.exist];
         scope textures = appender!(PlaneTexture[])();
         foreach (i, plane; [
-                world.left,
                 world.front,
+                world.left,
                 world.right,
                 world.back,
                 world.top,
@@ -188,6 +188,12 @@ void draw(
     immutable modelLocation = program.getUniformLocation("modelMatrix");
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
+    immutable frontLocation = program.getUniformLocation("frontTexture");
+    immutable leftLocation = program.getUniformLocation("leftTexture");
+    immutable rightLocation = program.getUniformLocation("rightTexture");
+    immutable backLocation = program.getUniformLocation("backTexture");
+    immutable topLocation = program.getUniformLocation("topTexture");
+    immutable bottomLocation = program.getUniformLocation("bottomTexture");
 
     program.duringUse({
         Mat4 tmp;
@@ -201,7 +207,13 @@ void draw(
         program
             .uniform(modelLocation, model)
             .uniform(viewLocation, view)
-            .uniform(projectionLocation, projection);
+            .uniform(projectionLocation, projection)
+            .uniform(frontLocation, 0)
+            .uniform(leftLocation, 1)
+            .uniform(rightLocation, 2)
+            .uniform(backLocation, 3)
+            .uniform(topLocation, 4)
+            .uniform(bottomLocation, 5);
         vao.duringBind(()
         {
             vao.drawElements();
