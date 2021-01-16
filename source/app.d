@@ -142,8 +142,8 @@ void main()
         }
 
         float actualFPS = info.actualFPS;
-        float rx = 0.0;
-        float ry = 0.0;
+        float rx = -0.3;
+        float ry = -0.3;
         float rz = 0.0;
         info.run({
             // show FPS.
@@ -165,9 +165,9 @@ void main()
                 ry,
                 rz);
 
-            rx += 0.01f;
+            //rx += 0.01f;
             ry += 0.01f;
-            rz += 0.01f;
+            //rz += 0.01f;
         });
     });
 }
@@ -188,12 +188,6 @@ void draw(
     immutable modelLocation = program.getUniformLocation("modelMatrix");
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
-    immutable frontTextureLocation = program.getUniformLocation("frontTexture");
-    immutable leftTextureLocation = program.getUniformLocation("leftTexture");
-    immutable rightTextureLocation = program.getUniformLocation("rightTexture");
-    immutable backTextureLocation = program.getUniformLocation("backTexture");
-    immutable topTextureLocation = program.getUniformLocation("topTexture");
-    immutable bottomTextureLocation = program.getUniformLocation("bottomTexture");
 
     program.duringUse({
         Mat4 tmp;
@@ -207,13 +201,7 @@ void draw(
         program
             .uniform(modelLocation, model)
             .uniform(viewLocation, view)
-            .uniform(projectionLocation, projection)
-            .uniform(frontTextureLocation, 0)
-            .uniform(leftTextureLocation, 1)
-            .uniform(rightTextureLocation, 2)
-            .uniform(backTextureLocation, 3)
-            .uniform(topTextureLocation, 4)
-            .uniform(bottomTextureLocation, 5);
+            .uniform(projectionLocation, projection);
         vao.duringBind(()
         {
             vao.drawElements();

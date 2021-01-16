@@ -244,11 +244,11 @@ struct PlaneTrianglePoints
         switch (current_)
         {
             default: case 0: return Point(0, 0);
-            case 1: return Point(1, 0);
-            case 2: return Point(0, 1);
-            case 3: return Point(1, 0);
+            case 1: return Point(0, 1);
+            case 2: return Point(1, 1);
+            case 3: return Point(0, 0);
             case 4: return Point(1, 1);
-            case 5: return Point(0, 1);
+            case 5: return Point(1, 0);
         }
     }
 

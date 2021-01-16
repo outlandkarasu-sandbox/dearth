@@ -364,6 +364,7 @@ class CubeWorld
         this.linkedPairs_ = [
             LinkedPair(front_, Edge.left, right_, Edge.right, false),
             LinkedPair(front_, Edge.right, left_, Edge.left, false),
+            /*
             LinkedPair(back_, Edge.left, left_, Edge.right, false),
             LinkedPair(back_, Edge.right, right_, Edge.left, false),
 
@@ -376,6 +377,7 @@ class CubeWorld
             LinkedPair(bottom_, Edge.top, front_, Edge.bottom, false),
             LinkedPair(bottom_, Edge.right, left_, Edge.bottom, false),
             LinkedPair(bottom_, Edge.bottom, back_, Edge.bottom, true),
+            */
         ];
     }
 
