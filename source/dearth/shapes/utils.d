@@ -146,8 +146,9 @@ VAO builder.
 
 Params:
     V = vertex type.
+    P = point type.
 */
-struct VAOBuilder(V)
+struct VAOBuilder(V, P = Point)
 {
     static assert(isVertexStruct!V);
 
@@ -158,7 +159,7 @@ struct VAOBuilder(V)
         point = required point.
         generator = vertex generator.
     */
-    void add(Dg)(auto scope ref const(Point) point, scope Dg generator) nothrow pure @safe scope
+    void add(Dg)(auto scope ref const(P) point, scope Dg generator) nothrow pure @safe scope
     {
         const p = point in indexMap_;
         if (!p)
@@ -204,7 +205,7 @@ struct VAOBuilder(V)
 private:
     Appender!(immutable(V)[]) vertices_;
     Appender!(immutable(ushort)[]) indices_;
-    ushort[Point] indexMap_;
+    ushort[P] indexMap_;
 }
 
 ///
@@ -243,11 +244,11 @@ struct PlaneTrianglePoints
         switch (current_)
         {
             default: case 0: return Point(0, 0);
-            case 1: return Point(1, 0);
-            case 2: return Point(0, 1);
-            case 3: return Point(1, 0);
+            case 1: return Point(0, 1);
+            case 2: return Point(1, 1);
+            case 3: return Point(0, 0);
             case 4: return Point(1, 1);
-            case 5: return Point(0, 1);
+            case 5: return Point(1, 0);
         }
     }
 

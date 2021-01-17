@@ -1,5 +1,8 @@
 import std.stdio : writefln;
 import std.random : choice;
+import std.array : appender;
+import std.algorithm : each;
+import std.math : PI;
 
 import bindbc.sdl : SDL_QuitEvent;
 import bindbc.opengl :
@@ -21,6 +24,8 @@ import dearth :
     createTexture,
     createVAO,
     createVertexShader,
+    CubePoint,
+    CubeSide,
     dearthMain,
     Mat4,
     PixelRGBA,
@@ -34,7 +39,7 @@ import dearth :
     VertexAttribute,
     VertexArrayObject;
 
-import life : World;
+import life : Life, PlaneWorld, CubeWorld;
 
 struct Vertex
 {
@@ -42,13 +47,57 @@ struct Vertex
 
     @(VertexAttribute.normalized)
     ubyte[2] uv;
+
+    float plane;
 }
 
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
 
-enum WORLD_WIDTH = 512;
-enum WORLD_HEIGHT = 512;
+enum WORLD_WIDTH = 32;
+enum WORLD_HEIGHT = 32;
+enum WORLD_DEPTH = 32;
+
+struct PlaneTexture
+{
+    @disable this();
+
+    this(PlaneWorld plane, uint index) scope
+    {
+        this.plane_ = plane;
+        this.texture_ = createTexture(
+            TextureType.texture2D,
+            TextureMinFilter.linear,
+            TextureMagFilter.linear,
+            TextureWrap.repeat,
+            TextureWrap.repeat);
+        this.pixels_.length = plane.width * plane.height;
+        this.index_ = index;
+    }
+
+    void refresh() scope
+    {
+        immutable width = cast(uint) plane_.width;
+        immutable height = cast(uint) plane_.height;
+        foreach (size_t x, size_t y, ref const(Life) life; plane_)
+        {
+            pixels_[y * width + x] = (life == Life.exist)
+                ? existsPixel : emptyPixel;
+        }
+
+        texture_.image2D(index_, width, height, pixels_[]);
+        texture_.activeAndBind(index_);
+    }
+
+private:
+    static immutable existsPixel = PixelRGBA(255, 0, 0, 255);
+    static immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
+
+    PlaneWorld plane_;
+    Texture texture_;
+    PixelRGBA[] pixels_;
+    uint index_;
+}
 
 void main()
 {
@@ -63,35 +112,65 @@ void main()
         auto shaderProgram = createProgram!Vertex(vertexShader, fragmentShader);
         auto vao = createCube!Vertex(
             2, 2, 2,
-            (Point p) => Vertex(
+            (CubePoint p) => Vertex(
                 [p.x / 2.0 - 0.5, p.y / 2.0 - 0.5, p.z / 2.0 - 0.5],
                 [
-                    cast(ubyte)(p.x * ubyte.max / 2),
-                    cast(ubyte)(p.y * ubyte.max / 2),
-                ]));
-
-        auto texture = createTexture(
-            TextureType.texture2D,
-            TextureMinFilter.linear,
-            TextureMagFilter.linear,
-            TextureWrap.repeat,
-            TextureWrap.repeat);
+                    cast(ubyte)(p.sideX * ubyte.max / 2),
+                    cast(ubyte)(p.sideY * ubyte.max / 2),
+                ],
+                cast(float) p.side));
 
         // initialize world.
-        scope world = new World(WORLD_WIDTH, WORLD_HEIGHT);
-        scope lifeChoices = [World.Life.empty, World.Life.exist];
-        foreach (size_t x, size_t y, ref World.Life life; world)
+        scope world = new CubeWorld(WORLD_WIDTH, WORLD_HEIGHT, WORLD_DEPTH);
+        scope lifeChoices = [Life.empty, Life.exist];
+        scope textures = appender!(PlaneTexture[])();
+        foreach (i, plane; [
+                world.front,
+                world.left,
+                world.right,
+                world.back,
+                world.top,
+                world.bottom,
+            ])
         {
-            life = lifeChoices.choice;
+            /*
+            foreach (size_t x, size_t y, ref Life life; plane)
+            {
+                life = lifeChoices.choice;
+            }
+            if (i == CubeSide.bottom)
+            {
+                immutable offsetX = 10;
+                immutable offsetY = WORLD_DEPTH - 1;
+                plane[0 + offsetX, 0 + offsetY] = Life.exist;
+                plane[1 + offsetX, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX, 0 + offsetY] = Life.exist;
+            }
+            */
+            if (i == CubeSide.front)
+            {
+                immutable offsetX = 15;
+                immutable offsetY = 10;
+                plane[0 + offsetX, 0 + offsetY] = Life.exist;
+                plane[0 + offsetX, 1 + offsetY] = Life.exist;
+                plane[0 + offsetX, 2 + offsetY] = Life.exist;
+                plane[1 + offsetX, 1 + offsetY] = Life.exist;
+                plane[2 + offsetX, 2 + offsetY] = Life.exist;
+
+                /*
+                plane[0 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[1 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX + 4, 1 + offsetY] = Life.exist;
+                plane[1 + offsetX + 4, 2 + offsetY] = Life.exist;
+                */
+            }
+            textures ~= PlaneTexture(plane, cast(uint) i);
         }
 
-        scope pixels = new PixelRGBA[WORLD_WIDTH * WORLD_HEIGHT];
-        immutable existsPixel = PixelRGBA(255, 0, 0, 255);
-        immutable emptyPixel = PixelRGBA(0, 0, 0, 255);
-
         float actualFPS = info.actualFPS;
-        float rx = 0.0;
-        float ry = 0.0;
+        float rx = 0.3;
+        float ry = -0.3;
         float rz = 0.0;
         info.run({
             // show FPS.
@@ -102,29 +181,20 @@ void main()
             }
 
             world.nextGeneration();
-            foreach (size_t x, size_t y, ref const(World.Life) life; world)
-            {
-                pixels[y * WORLD_WIDTH + x]
-                    = (world[x, y] == World.Life.exist)
-                    ? existsPixel : emptyPixel;
-            }
-
-            texture.image2D(WORLD_WIDTH, WORLD_HEIGHT, pixels[]);
-            texture.activeAndBind(0);
+            textures.each!"a.refresh()";
 
             draw(
                 shaderProgram,
                 vao,
-                texture,
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT,
                 rx,
                 ry,
                 rz);
 
-            rx += 0.05f;
-            ry += 0.05f;
-            rz += 0.05f;
+            //rx += 0.01f;
+            //ry += 0.01f;
+            //rz += 0.01f;
         });
     });
 }
@@ -132,20 +202,25 @@ void main()
 void draw(
     scope ref ShaderProgram!Vertex program,
     scope ref VertexArrayObject!Vertex vao,
-    scope ref Texture texture,
     uint width,
     uint height,
     float x,
     float y,
     float z)
 {
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scope(exit) glFlush();
 
     immutable modelLocation = program.getUniformLocation("modelMatrix");
     immutable viewLocation = program.getUniformLocation("viewMatrix");
     immutable projectionLocation = program.getUniformLocation("projectionMatrix");
+    immutable frontLocation = program.getUniformLocation("frontTexture");
+    immutable leftLocation = program.getUniformLocation("leftTexture");
+    immutable rightLocation = program.getUniformLocation("rightTexture");
+    immutable backLocation = program.getUniformLocation("backTexture");
+    immutable topLocation = program.getUniformLocation("topTexture");
+    immutable bottomLocation = program.getUniformLocation("bottomTexture");
 
     program.duringUse({
         Mat4 tmp;
@@ -159,7 +234,13 @@ void draw(
         program
             .uniform(modelLocation, model)
             .uniform(viewLocation, view)
-            .uniform(projectionLocation, projection);
+            .uniform(projectionLocation, projection)
+            .uniform(frontLocation, 0)
+            .uniform(leftLocation, 1)
+            .uniform(rightLocation, 2)
+            .uniform(backLocation, 3)
+            .uniform(topLocation, 4)
+            .uniform(bottomLocation, 5);
         vao.duringBind(()
         {
             vao.drawElements();

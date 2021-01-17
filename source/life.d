@@ -3,19 +3,22 @@ Life game module.
 */
 module life;
 
+import std.typecons : Nullable, nullable;
+
 @safe:
+
+/// Life value.
+enum Life : ubyte
+{
+    empty = 0,
+    exist = 1,
+}
 
 /**
 Life game world.
 */
-class World
+abstract class PlaneWorld
 {
-    enum Life : ubyte
-    {
-        empty = 0,
-        exist = 1,
-    }
-
     /**
     Initialize by world size.
 
@@ -123,9 +126,47 @@ class World
                 next[rowOffset + x] = nextLife;
             }
         }
+    }
 
+    /**
+    Swap current plane.
+    */
+    void swapPlane() @nogc nothrow pure scope
+    {
         this.currentPlane_ = (currentPlane_ is plane1_) ? plane2_ : plane1_;
     }
+
+    void nextGenerationAndSwap() @nogc nothrow pure scope
+    {
+        nextGeneration();
+        swapPlane();
+    }
+
+    @property const @nogc nothrow pure @safe
+    {
+        size_t width() scope
+        {
+            return width_;
+        }
+
+        size_t height() scope
+        {
+            return height_;
+        }
+    }
+
+protected:
+
+    /**
+    get near edge lives.
+
+    Params:
+        x = cell x.
+        y = cell y.
+    Returns:
+        true if live is.
+    */
+    abstract bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope;
 
 private:
 
@@ -142,29 +183,39 @@ private:
     in (x < width_)
     in (y < height_)
     {
-        immutable rightEdge = width_ - 1;
-        immutable bottomEdge = height_ - 1;
+        size_t count = 0;
+        if (isLive(x - 1, y - 1)) ++count;
+        if (isLive(x - 1, y    )) ++count;
+        if (isLive(x - 1, y + 1)) ++count;
+        if (isLive(x    , y - 1)) ++count;
+        //if (isLive(x    , y    )) ++count;
+        if (isLive(x    , y + 1)) ++count;
+        if (isLive(x + 1, y - 1)) ++count;
+        if (isLive(x + 1, y    )) ++count;
+        if (isLive(x + 1, y + 1)) ++count;
 
-        immutable left = (x == 0) ? rightEdge : x - 1;
-        immutable right = (x == rightEdge) ? 0 : x + 1;
-        immutable up = (y == 0) ? bottomEdge : y - 1;
-        immutable down = (y == bottomEdge) ? 0 : y + 1;
+        return count;
+    }
 
-        size_t result = 0;
+    /**
+    get near lives.
 
-        if (this[left, up]) ++result;
-        if (this[x, up]) ++result;
-        if (this[right, up]) ++result;
-
-        if (this[left, y]) ++result;
-        // if (this[x, y]) ++result;
-        if (this[right, y]) ++result;
-
-        if (this[left, down]) ++result;
-        if (this[x, down]) ++result;
-        if (this[right, down]) ++result;
-
-        return result;
+    Params:
+        x = cell x.
+        y = cell y.
+    Returns:
+        true if live is.
+    */
+    bool isLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+    {
+        if (x < 0 || width_ <= x || y < 0 || height_ <= y)
+        {
+            return isEdgeLive(x, y);
+        }
+        else
+        {
+            return this[x, y] == Life.exist;
+        }
     }
 
     @property Life[] nextPlane() @nogc nothrow pure return scope
@@ -179,26 +230,68 @@ private:
     size_t height_;
 }
 
+class TorusWorld : PlaneWorld
+{
+    /**
+    Initialize by world size.
+
+    Params:
+        w = world width.
+        h = world height.
+    */
+    this(size_t w, size_t h) nothrow pure scope
+    {
+        super(w, h);
+    }
+
+protected:
+
+    override bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+    {
+        auto liveX = x;
+        if (liveX < 0)
+        {
+            liveX += width_;
+        }
+        else if (width_ <= liveX)
+        {
+            liveX -= width_;
+        }
+
+        auto liveY = y;
+        if (liveY < 0)
+        {
+            liveY += height_;
+        }
+        else if (height_ <= liveY)
+        {
+            liveY -= height_;
+        }
+
+        return this[liveX, liveY] == Life.exist;
+    }
+}
+
 ///
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    assert(world[0, 0] == World.Life.empty);
-    assert(world[99, 99] == World.Life.empty);
+    scope world = new TorusWorld(100, 100);
+    assert(world[0, 0] == Life.empty);
+    assert(world[99, 99] == Life.empty);
 
-    world[0, 0] = World.Life.exist;
-    assert(world[0, 0] == World.Life.exist);
-    assert(world[99, 99] == World.Life.empty);
+    world[0, 0] = Life.exist;
+    assert(world[0, 0] == Life.exist);
+    assert(world[99, 99] == Life.empty);
 
-    world[99, 99] = World.Life.exist;
-    assert(world[0, 0] == World.Life.exist);
-    assert(world[99, 99] == World.Life.exist);
+    world[99, 99] = Life.exist;
+    assert(world[0, 0] == Life.exist);
+    assert(world[99, 99] == Life.exist);
 }
 
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    world[0, 0] = World.Life.exist;
+    scope world = new TorusWorld(100, 100);
+    world[0, 0] = Life.exist;
 
     assert(world.count(98, 0) == 0);
     assert(world.count(99, 0) == 1);
@@ -222,12 +315,12 @@ nothrow pure unittest
 ///
 nothrow pure unittest
 {
-    scope world = new World(100, 100);
-    world[0, 0] = World.Life.exist;
-    world[1, 0] = World.Life.exist;
-    world[2, 0] = World.Life.exist;
+    scope world = new TorusWorld(100, 100);
+    world[0, 0] = Life.exist;
+    world[1, 0] = Life.exist;
+    world[2, 0] = Life.exist;
 
-    world.nextGeneration();
+    world.nextGenerationAndSwap();
 
     assert(!world[0, 0]);
     assert( world[1, 0]);
@@ -240,5 +333,220 @@ nothrow pure unittest
     assert(!world[0, 99]);
     assert( world[1, 99]);
     assert(!world[2, 99]);
+}
+
+/**
+Life game cube world.
+*/
+class CubeWorld
+{
+    /**
+    Initialize cube world.
+
+    Params:
+        width = cube width.
+        height = cube height.
+        depth = cube depth.
+    */
+    this(size_t width, size_t height, size_t depth) nothrow pure @safe scope
+    {
+        this.width_ = width;
+        this.height_ = height;
+        this.depth_ = depth;
+
+        this.front_ = new InnerWorld(width, height);
+        this.left_ = new InnerWorld(depth, height);
+        this.right_ = new InnerWorld(depth, height);
+        this.back_ = new InnerWorld(width, height);
+        this.top_ = new InnerWorld(width, depth);
+        this.bottom_ = new InnerWorld(width, depth);
+
+        this.linkedPairs_ = [
+            LinkedPair(front_, Edge.left, right_, Edge.left, false),
+            LinkedPair(front_, Edge.right, left_, Edge.left, false),
+
+            LinkedPair(back_, Edge.left, right_, Edge.right, false),
+            LinkedPair(back_, Edge.right, left_, Edge.right, false),
+
+            LinkedPair(top_, Edge.bottom, back_, Edge.bottom, false),
+            LinkedPair(top_, Edge.top, front_, Edge.bottom, false),
+            LinkedPair(top_, Edge.left, right_, Edge.bottom, false),
+            LinkedPair(top_, Edge.right, left_, Edge.bottom, false),
+
+            LinkedPair(bottom_, Edge.bottom, back_, Edge.top, false),
+            LinkedPair(bottom_, Edge.left, right_, Edge.top, false),
+            LinkedPair(bottom_, Edge.top, front_, Edge.top, false),
+            LinkedPair(bottom_, Edge.right, left_, Edge.top, false),
+        ];
+    }
+
+    @property @nogc nothrow pure
+    {
+        inout(PlaneWorld) left() inout return scope { return left_; }
+        inout(PlaneWorld) right() inout return scope { return right_; }
+        inout(PlaneWorld) front() inout return scope { return front_; }
+        inout(PlaneWorld) back() inout return scope { return back_; }
+        inout(PlaneWorld) top() inout return scope { return top_; }
+        inout(PlaneWorld) bottom() inout return scope { return bottom_; }
+    }
+
+    /**
+    Move to next generation state.
+    */
+    void nextGeneration() @nogc nothrow pure scope
+    {
+        foreach (plane; [front_, left_, right_, back_, top_, bottom_])
+        {
+            plane.nextGeneration();
+        }
+
+        foreach (plane; [front_, left_, right_, back_, top_, bottom_])
+        {
+            plane.swapPlane();
+        }
+    }
+
+private:
+
+    enum Edge { left, right, top, bottom }
+
+    struct Link
+    {
+        PlaneWorld plane;
+        Edge edge;
+        bool reverse;
+
+        bool isLiveUnderflow(ptrdiff_t a, ptrdiff_t b) const @nogc nothrow pure scope
+        {
+            immutable dw = plane.width;
+            immutable dh = plane.height;
+            final switch (edge)
+            {
+                case Edge.right:
+                    return plane.isLive(dw + a, reverse ? dh - b - 1 : b);
+                case Edge.left:
+                    return plane.isLive(-a - 1, reverse ? dh - b - 1 : b);
+                case Edge.top:
+                    return plane.isLive(reverse ? dw - b - 1 : b, -a - 1);
+                case Edge.bottom:
+                    return plane.isLive(reverse ? dw - b - 1 : b, dh + a);
+            }
+        }
+
+        bool isLiveOverflow(ptrdiff_t a, ptrdiff_t b) const @nogc nothrow pure scope
+        {
+            immutable dw = plane.width;
+            immutable dh = plane.height;
+            final switch (edge)
+            {
+                case Edge.right:
+                    return plane.isLive(dw - a - 1, reverse ? dh - b - 1 : b);
+                case Edge.left:
+                    return plane.isLive(a, reverse ? dh - b - 1 : b);
+                case Edge.top:
+                    return plane.isLive(reverse ? dw - b - 1 : b, a);
+                case Edge.bottom:
+                    return plane.isLive(reverse ? dw - b - 1 : b, dh - a - 1);
+            }
+        }
+    }
+
+    struct LinkedPair
+    {
+        PlaneWorld plane1;
+        Edge edge1;
+        PlaneWorld plane2;
+        Edge edge2;
+        bool reverse;
+
+        Nullable!(const(Link)) getLinked(scope const(PlaneWorld) plane, Edge edge) const nothrow @nogc pure
+        {
+            if (plane1 is plane && edge1 == edge)
+            {
+                return nullable(const(Link)(plane2, edge2, reverse));
+            }
+            else if (plane2 is plane && edge2 == edge)
+            {
+                return nullable(const(Link)(plane1, edge1, reverse));
+            }
+
+            return typeof(return).init;
+        }
+    }
+
+    class InnerWorld : PlaneWorld
+    {
+        this(size_t w, size_t h) nothrow pure scope
+        {
+            super(w, h);
+        }
+
+    protected:
+
+        override bool isEdgeLive(ptrdiff_t x, ptrdiff_t y) const @nogc nothrow pure scope
+        {
+            if (x < 0)
+            {
+                auto link = getLinked(this, Edge.left);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveUnderflow(x, y);
+                }
+            }
+            else if (width <= x)
+            {
+                auto link = getLinked(this, Edge.right);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveOverflow(x - width, y);
+                }
+            }
+            else if (y < 0)
+            {
+                auto link = getLinked(this, Edge.top);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveUnderflow(y, x);
+                }
+            }
+            else if (height <= y)
+            {
+                auto link = getLinked(this, Edge.bottom);
+                if (!link.isNull)
+                {
+                    return link.get.isLiveOverflow(y - height, x);
+                }
+            }
+
+            return false;
+        }
+    }
+
+    Nullable!(const(Link)) getLinked(scope const(PlaneWorld) plane, Edge edge) const nothrow @nogc pure
+    {
+        foreach (pair; linkedPairs_)
+        {
+            auto link = pair.getLinked(plane, edge);
+            if (!link.isNull)
+            {
+                return link;
+            }
+        }
+
+        return typeof(return).init;
+    }
+
+    size_t width_;
+    size_t height_;
+    size_t depth_;
+
+    PlaneWorld front_;
+    PlaneWorld left_;
+    PlaneWorld right_;
+    PlaneWorld back_;
+    PlaneWorld top_;
+    PlaneWorld bottom_;
+
+    LinkedPair[] linkedPairs_;
 }
 

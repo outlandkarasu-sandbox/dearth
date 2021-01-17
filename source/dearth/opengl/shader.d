@@ -43,6 +43,7 @@ import bindbc.opengl :
     glLinkProgram,
     glShaderSource,
     glUseProgram,
+    glUniform1i,
     glUniformMatrix4fv;
 
 import dearth.opengl.exception :
@@ -217,6 +218,24 @@ struct ShaderProgram(T)
     {
         enforceGL!(() => glUniformMatrix4fv(
             cast(GLint) location, 1, GL_FALSE, value.ptr));
+        return this;
+    }
+
+    /**
+    Set uniform variable.
+
+    Params:
+        location = uniform location.
+        value = uniform value.
+    Returns:
+        this object.
+    Throws:
+        OpenGLException if failed.
+    */
+    ref typeof(this) uniform()(UniformLocation location, int value) scope return
+    in (isCurrent)
+    {
+        enforceGL!(() => glUniform1i(cast(GLint) location, value));
         return this;
     }
 
