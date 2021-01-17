@@ -2,6 +2,7 @@ import std.stdio : writefln;
 import std.random : choice;
 import std.array : appender;
 import std.algorithm : each;
+import std.math : PI;
 
 import bindbc.sdl : SDL_QuitEvent;
 import bindbc.opengl :
@@ -132,17 +133,16 @@ void main()
                 world.bottom,
             ])
         {
-            immutable offsetY = 3;
-            immutable offsetX = 3;
-            plane[0 + offsetX, 0 + offsetY] = Life.exist;
-            plane[1 + offsetX, 0 + offsetY] = Life.exist;
-            plane[2 + offsetX, 0 + offsetY] = Life.exist;
+            foreach (size_t x, size_t y, ref Life life; plane)
+            {
+                life = lifeChoices.choice;
+            }
             textures ~= PlaneTexture(plane, cast(uint) i);
         }
 
         float actualFPS = info.actualFPS;
-        float rx = -0.2;
-        float ry = 0.0;
+        float rx = 0.3;
+        float ry = 0.3;
         float rz = 0.0;
         info.run({
             // show FPS.
