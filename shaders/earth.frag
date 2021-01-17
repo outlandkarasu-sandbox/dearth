@@ -39,7 +39,7 @@ void main()
     } else {
         discard;
     }
-    */
+*/
 }
 
 vec4 getPlaneColor(sampler2D texture, float plane)

@@ -133,16 +133,44 @@ void main()
                 world.bottom,
             ])
         {
+            /*
             foreach (size_t x, size_t y, ref Life life; plane)
             {
                 life = lifeChoices.choice;
+            }
+            if (i == CubeSide.bottom)
+            {
+                immutable offsetX = 10;
+                immutable offsetY = WORLD_DEPTH - 1;
+                plane[0 + offsetX, 0 + offsetY] = Life.exist;
+                plane[1 + offsetX, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX, 0 + offsetY] = Life.exist;
+            }
+            */
+            if (i == CubeSide.front)
+            {
+                immutable offsetX = 15;
+                immutable offsetY = 10;
+                plane[0 + offsetX, 0 + offsetY] = Life.exist;
+                plane[0 + offsetX, 1 + offsetY] = Life.exist;
+                plane[0 + offsetX, 2 + offsetY] = Life.exist;
+                plane[1 + offsetX, 1 + offsetY] = Life.exist;
+                plane[2 + offsetX, 2 + offsetY] = Life.exist;
+
+                /*
+                plane[0 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[1 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX + 4, 0 + offsetY] = Life.exist;
+                plane[2 + offsetX + 4, 1 + offsetY] = Life.exist;
+                plane[1 + offsetX + 4, 2 + offsetY] = Life.exist;
+                */
             }
             textures ~= PlaneTexture(plane, cast(uint) i);
         }
 
         float actualFPS = info.actualFPS;
         float rx = 0.3;
-        float ry = 0.3;
+        float ry = -0.3;
         float rz = 0.0;
         info.run({
             // show FPS.
@@ -165,7 +193,7 @@ void main()
                 rz);
 
             //rx += 0.01f;
-            ry += 0.01f;
+            //ry += 0.01f;
             //rz += 0.01f;
         });
     });
