@@ -24,6 +24,7 @@ import dearth :
     createVAO,
     createVertexShader,
     CubePoint,
+    CubeSide,
     dearthMain,
     Mat4,
     PixelRGBA,
@@ -52,9 +53,9 @@ struct Vertex
 enum WINDOW_WIDTH = 640;
 enum WINDOW_HEIGHT = 480;
 
-enum WORLD_WIDTH = 128;
-enum WORLD_HEIGHT = 128;
-enum WORLD_DEPTH = 128;
+enum WORLD_WIDTH = 32;
+enum WORLD_HEIGHT = 32;
+enum WORLD_DEPTH = 32;
 
 struct PlaneTexture
 {
@@ -131,19 +132,17 @@ void main()
                 world.bottom,
             ])
         {
-            if (i == 0)
-            {
-                foreach (size_t x, size_t y, ref Life life; plane)
-                {
-                    life = lifeChoices.choice;
-                }
-            }
+            immutable offsetY = 3;
+            immutable offsetX = 3;
+            plane[0 + offsetX, 0 + offsetY] = Life.exist;
+            plane[1 + offsetX, 0 + offsetY] = Life.exist;
+            plane[2 + offsetX, 0 + offsetY] = Life.exist;
             textures ~= PlaneTexture(plane, cast(uint) i);
         }
 
         float actualFPS = info.actualFPS;
-        float rx = -0.3;
-        float ry = -0.3;
+        float rx = -0.2;
+        float ry = 0.0;
         float rz = 0.0;
         info.run({
             // show FPS.
@@ -181,7 +180,7 @@ void draw(
     float y,
     float z)
 {
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     scope(exit) glFlush();
 

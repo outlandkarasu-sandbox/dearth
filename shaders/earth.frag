@@ -22,6 +22,24 @@ void main()
     gl_FragColor += getPlaneColor(backTexture, 3.0);
     gl_FragColor += getPlaneColor(topTexture, 4.0);
     gl_FragColor += getPlaneColor(bottomTexture, 5.0);
+
+/*
+    if (vPlane == 0.0) {
+        gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    } else if (vPlane == 1.0) {
+        gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0);
+    } else if (vPlane == 2.0) {
+        gl_FragColor = vec4(0.0, 0.0, 1.0, 1.0);
+    } else if (vPlane == 3.0) {
+        gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0);
+    } else if (vPlane == 4.0) {
+        gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    } else if (vPlane == 5.0) {
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+    } else {
+        discard;
+    }
+    */
 }
 
 vec4 getPlaneColor(sampler2D texture, float plane)

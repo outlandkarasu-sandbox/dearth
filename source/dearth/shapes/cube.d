@@ -61,19 +61,19 @@ in (splitD > 0)
     static assert(isVertexStruct!T);
 
     auto front = PlanePointPaths(splitH, splitV)
-        .map!((p) => CubePoint(splitH - p.x, p.y, 0, CubeSide.front, p.x, p.y));
-    auto back = PlanePointPaths(splitH, splitV)
-        .map!((p) => CubePoint(p.x, p.y, splitV, CubeSide.back, p.x, p.y));
-
+        .map!((p) => CubePoint(p.x, p.y, splitD, CubeSide.front, splitH - p.x, p.y));
     auto left = PlanePointPaths(splitD, splitV)
-        .map!((p) => CubePoint(0, p.y, p.x, CubeSide.left, p.x, p.y));
+        .map!((p) => CubePoint(0, p.y, p.x, CubeSide.left, splitD - p.x, p.y));
     auto right = PlanePointPaths(splitD, splitV)
         .map!((p) => CubePoint(splitH, p.y, splitD - p.x, CubeSide.right, p.x, p.y));
 
+    auto back = PlanePointPaths(splitH, splitV)
+        .map!((p) => CubePoint(splitH - p.x, p.y, 0, CubeSide.back, p.x, p.y));
+
     auto top = PlanePointPaths(splitH, splitD)
-        .map!((p) => CubePoint(p.x, splitV, splitD - p.y, CubeSide.top, p.x, p.y));
+        .map!((p) => CubePoint(p.x, splitV, splitD - p.y, CubeSide.top, splitH - p.x, p.y));
     auto bottom = PlanePointPaths(splitH, splitD)
-        .map!((p) => CubePoint(p.x, 0, p.y, CubeSide.bottom, p.x, p.y));
+        .map!((p) => CubePoint(p.x, 0, p.y, CubeSide.bottom, splitH - p.x, splitD - p.y));
 
     scope builder = VAOBuilder!(T, CubePoint)();
     chain(
